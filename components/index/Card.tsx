@@ -16,8 +16,8 @@ export default function GameCard({ title, description, imageSrc, imageAlt, ...re
         Tweakable values used to change the GameCard.
     */
 	const cardRadius = 5;
-	const cardMaxW = 650;
-	let cardMaxH: number | string = 200;
+	const cardMaxW = 2600; // A bit wider than 1440p
+	const cardMaxH = 140;
 	const cardPadding = 4;
 	const cardMargin = 0;
 
@@ -27,17 +27,6 @@ export default function GameCard({ title, description, imageSrc, imageAlt, ...re
 	*/
 	const router = useRouter();
 
-	/*
-		The useMediaQuery hook is used to determine if the screen is
-		too narrow to show images within the card. The specific width
-		is determined by the value of CardMaxW.
-	*/
-	const [ thinScreen ] = useMediaQuery(`(min-width: ${ cardMaxW + 272 }px)`);
-
-	if (!thinScreen) {
-		cardMaxH = "";
-	}
-
 
 	return(
 		<Card
@@ -46,38 +35,31 @@ export default function GameCard({ title, description, imageSrc, imageAlt, ...re
 			maxH={cardMaxH}
 			m={cardMargin}
 			borderRadius={cardRadius}
-			background="lightOrange"
+			background="offWhite"
 			direction={{ base: "column", sm: "row" }}
 			alignItems="center" // Aligns the text and image within the card
 			_hover={{
-				boxShadow: "0 0 0 3px #7176FF",
-				transition: "box-shadow 0.4s ease",
+				boxShadow: "0 0 0 3px #74b87d",
+				background: "#c5d8df",
+        		transition: "box-shadow 0.2s ease-in-out, background 0.4s ease-in-out",
 				cursor: "pointer",
 			}}
 			{...rest}
 		>
-
-			{/* Image that offs itself if screen is too narrow. The
-			following code uses a short circuit to only display the
-			image if thinScreen is true. */}
-			{thinScreen &&
-				// <AspectRatio ratio={1} h={"200px"} w={"200px"}>
-				<Image
-					borderLeftRadius={cardRadius}
-					src={imageSrc}
-					alt={imageAlt}
-					maxH={cardMaxH}
-				/>
-				// </AspectRatio>
-			}
+			<Image
+				borderLeftRadius={cardRadius}
+				src={imageSrc}
+				alt={imageAlt}
+				maxHeight={cardMaxH}
+			/>
 
 			{/* Game Information passed in from the array at the top of index.tsx */}
 			<CardBody display="flex" alignItems="center" padding={cardPadding}>
 				<Stack>
-					<Heading size="lg" color="offWhite">
+					<Heading size="lg" color="gray">
 						{title}
 					</Heading>
-					<Heading size="sm" color="fadedPurple">
+					<Heading size="sm" color="darkGreen">
 						{description}
 					</Heading>
 				</Stack>

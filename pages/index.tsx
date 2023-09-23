@@ -1,7 +1,6 @@
 /* eslint-disable no-eq-null */
 import CardGrid from "@/components/index/CardGrid";
 import Header from "@/components/index/Header";
-import Sidebar from "@/components/index/Sidebar";
 import { Grid, GridItem } from "@chakra-ui/react";
 import { useState } from "react";
 
@@ -30,10 +29,9 @@ interface DashboardProps {
 function Dashboard({ username, ...rest }: DashboardProps) {
 	return(
 		<Grid background="lightGray"
-			templateAreas={`'sidebar header'
-							'sidebar main'`}
-			gridTemplateColumns={"80px 1fr"}
-			gridTemplateRows={"1fr 8fr"}
+			templateAreas={`'header'
+							'main'`}
+			gridTemplateRows={"70px 1fr"}
 			{...rest}
 		>
 
@@ -55,9 +53,8 @@ function Dashboard({ username, ...rest }: DashboardProps) {
 					// Creating custom scrollbar.
 					// Unfortunately the colors from themes don't work here so you have to hard code
 					"&::-webkit-scrollbar": { width: "0.75rem" },
-					"&::-webkit-scrollbar-track": { backgroundColor: "#211C34" },
-					"&::-webkit-scrollbar-thumb": { backgroundColor: "#252641", borderRadius: "0.25rem" },
-					"&::-webkit-scrollbar-thumb:hover": { backgroundColor: "#7276F7" },
+					"&::-webkit-scrollbar-track": { backgroundColor: "#d5e3e8" },
+					"&::-webkit-scrollbar-thumb": { backgroundColor: "#74b87d", borderRadius: "0.25rem" },
 				}}
 				area={"main"}>
 
@@ -65,9 +62,6 @@ function Dashboard({ username, ...rest }: DashboardProps) {
 
 			</GridItem>
 
-			<GridItem bg="lightGray" area={"sidebar"}>
-				<Sidebar />
-			</GridItem>
 		</Grid>
 	);
 }

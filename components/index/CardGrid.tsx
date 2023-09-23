@@ -125,8 +125,8 @@ interface GameGridProps {
 
 export default function GameGrid({  }: GameGridProps) {
 	return(
-		<Flex maxW="3600" m="auto" justify="center" direction="row" wrap="wrap" gap="12">
-			<Stack flex="1" direction="column" alignItems="center" ml="3vh" mr="3vh" mb="4vh" mt="3px" rowGap="12">
+		<Flex maxW="3600" m="auto" justify="center" direction="row">
+			<Stack flex="1" direction="column" alignItems="center" ml="1vh" mr="1vh" mb="4vh" mt="1vh" rowGap="2">
 				{cards.map((card) => {
 					return <Card
 						key={card.key} // This is required for mapped objects but is not used

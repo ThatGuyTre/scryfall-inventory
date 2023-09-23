@@ -37,18 +37,17 @@ export default function Header({ username }: HeaderProps) {
 
 	return(
 		<HStack w="100%" h="100%" background="desaturatedGreen" display="flex" pl={outerPadding} pr={outerPadding}>
-			<Heading color="offWhite" fontSize={fSize} fontWeight="bold" textAlign="left" >
+			<Heading color="gray.200" fontSize={fSize} fontWeight="bold" textAlign="left" >
 				{welcomeMessage}
 			</Heading>
 			<Spacer />
 			<Button
-				variant="outline"
 				color="transparent"
-				borderColor="fadedPurple"
 				mr={3}
 				_hover={
 					{ bg: "lightOrange", textColor: "offWhite" }
 				}>
+					maybe this should be a view button
 			</Button>
 		</HStack>
 	);
