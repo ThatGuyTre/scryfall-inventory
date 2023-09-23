@@ -5,5 +5,5 @@ export const Colors = {
 	fadedLightBlue: "#8088FF",
 	lightGray: "#D3D3D3",
 	fadedPurple: "#a57ecc",
-	lightGreen: "#6cef7a",
+	desaturatedGreen: "#46804e",
 };
