@@ -1,4 +1,4 @@
-import { AspectRatio, Card, CardBody, Heading, Image, Stack, useMediaQuery } from "@chakra-ui/react";
+import { Text, Card, CardBody, Heading, Image, Stack, useMediaQuery } from "@chakra-ui/react";
 import { useRouter } from "next/router";
 
 
@@ -61,9 +61,9 @@ export default function GameCard({ title, description, imageSrc, imageAlt, ...re
 					<Heading size="lg" color="gray">
 						{title}
 					</Heading>
-					<Heading size="sm" color="darkGreen">
+					<Text size="sm" color="darkGreen">
 						{description}
-					</Heading>
+					</Text>
 				</Stack>
 			</CardBody>
 		</Card>
