@@ -36,7 +36,13 @@ export default function Header({ username }: HeaderProps) {
 	}
 
 	return(
-		<HStack w="100%" h="100%" background="desaturatedGreen" display="flex" pl={outerPadding} pr={outerPadding}>
+		<HStack
+			w="100%" h="100%"
+			background="desaturatedGreen"
+			display="flex"
+			pl={outerPadding} pr={outerPadding}
+			border="3px solid green"  borderTop="none" borderBottomRadius={15}
+		>
 			<Heading color="gray.200" fontSize={fSize} fontWeight="bold" textAlign="left" >
 				{welcomeMessage}
 			</Heading>
