@@ -6,6 +6,7 @@ export type GameCardProps = {
   imageSrc: string;
   imageAlt: string;
   key: string;
+  scryfall_uri: string;
 };
 
 export async function fetchRandomCard(): Promise<GameCardProps> {
@@ -23,6 +24,7 @@ export async function fetchRandomCard(): Promise<GameCardProps> {
       imageSrc: data.image_uris?.art_crop || "",
       imageAlt: data.name,
       key: data.tcgplayer_id + "",
+      scryfall_uri: data.scryfall_uri,
     };
 
     return formatted;

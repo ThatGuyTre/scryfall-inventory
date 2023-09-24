@@ -8,9 +8,10 @@ type GameCardProps = {
     imageSrc: string,
     imageAlt: string,
     key: string,
+	scryfall_uri: string,
 }
 
-export default function GameCard({ title, description, imageSrc, imageAlt, ...rest }: GameCardProps) {
+export default function GameCard({ title, description, imageSrc, imageAlt, scryfall_uri, ...rest }: GameCardProps) {
 
 	/*
         Tweakable values used to change the GameCard.
@@ -27,11 +28,14 @@ export default function GameCard({ title, description, imageSrc, imageAlt, ...re
 	*/
 	const router = useRouter();
 
+	function handleClick() {
+		// router.push(scryfall_uri);
+		window.open(scryfall_uri, "_blank");
+	}
 
 	return(
 		<Card
-			width="100%"
-			maxWidth={cardMaxW}
+			width="100%" maxWidth={cardMaxW}
 			maxH={cardMaxH}
 			m={cardMargin}
 			borderRadius={cardRadius}
@@ -44,6 +48,7 @@ export default function GameCard({ title, description, imageSrc, imageAlt, ...re
         		transition: "box-shadow 0.2s ease-in-out, background 0.4s ease-in-out",
 				cursor: "pointer",
 			}}
+			onClick={handleClick}
 			{...rest}
 		>
 			<Image

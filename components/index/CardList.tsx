@@ -1,4 +1,4 @@
-import { Flex, Heading, Stack } from "@chakra-ui/react";
+import { Flex, Heading, Link, Stack } from "@chakra-ui/react";
 import Card from "./Card";
 import { GameCardProps, fetchRandomCard } from "../ScryfallAPI";
 import { useEffect, useState } from "react";
@@ -42,7 +42,16 @@ export default function CardList({}: CardListProps) {
         {isLoaded ? ( // Check if cards are loaded
           cards.map((card) => {
             console.log("displaying a card"); // This is just to show that the code is running
-            return <Card key={card.key} title={card.title} description={card.description} imageSrc={card.imageSrc} imageAlt={card.imageAlt} />;
+            return (
+				<Card
+				key={card.key}
+				title={card.title}
+				description={card.description}
+				imageSrc={card.imageSrc}
+				imageAlt={card.imageAlt}
+				scryfall_uri={card.scryfall_uri}
+				/>
+			  );
           })
         ) : (
           <Heading color="gray" size="lg">Loading...</Heading> // Display a loading message while cards are being fetched
