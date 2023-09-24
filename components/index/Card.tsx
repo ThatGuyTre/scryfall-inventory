@@ -50,7 +50,9 @@ export default function GameCard({ title, description, imageSrc, imageAlt, ...re
 				borderLeftRadius={cardRadius}
 				src={imageSrc}
 				alt={imageAlt}
-				maxHeight={cardMaxH}
+				width={cardMaxH * 19/14}
+				height={cardMaxH}
+				objectFit="cover"
 			/>
 
 			{/* Game Information passed in from the array at the top of index.tsx */}
