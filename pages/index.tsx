@@ -1,8 +1,6 @@
-/* eslint-disable no-eq-null */
-import CardGrid from "@/components/index/CardGrid";
+import CardGrid from "@/components/index/CardList";
 import Header from "@/components/index/Header";
 import { Grid, GridItem } from "@chakra-ui/react";
-import { useState } from "react";
 
 
 /*
