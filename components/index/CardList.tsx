@@ -1,11 +1,11 @@
-import { Flex, Stack } from "@chakra-ui/react";
+import { Flex, Heading, Stack } from "@chakra-ui/react";
 import Card from "./Card";
 import { GameCardProps, fetchRandomCard } from "../ScryfallAPI";
 import { useEffect, useState } from "react";
 
-interface GameGridProps {}
+interface CardListProps {}
 
-export default function CardList({}: GameGridProps) {
+export default function CardList({}: CardListProps) {
   const [cards, setCards] = useState<GameCardProps[]>([]); // Initialize cards as an empty array
   const [isLoaded, setIsLoaded] = useState<boolean>(false); // Initialize isLoaded as false
 
@@ -45,7 +45,7 @@ export default function CardList({}: GameGridProps) {
             return <Card key={card.key} title={card.title} description={card.description} imageSrc={card.imageSrc} imageAlt={card.imageAlt} />;
           })
         ) : (
-          <p>Loading...</p> // Display a loading message while cards are being fetched
+          <Heading color="gray" size="lg">Loading...</Heading> // Display a loading message while cards are being fetched
         )}
       </Stack>
     </Flex>
