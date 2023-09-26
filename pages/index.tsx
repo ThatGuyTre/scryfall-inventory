@@ -12,7 +12,7 @@ import { Grid, GridItem } from "@chakra-ui/react";
 interface DashboardProps {
 	username: string | undefined,
 	w: string,
-	h: string
+	h: string,
 }
 
 /**
@@ -21,7 +21,7 @@ interface DashboardProps {
 	CardGrid, and Sidebar objects. The [rest: string] prop is used
 	to pass styling to the ChakraUI Grid element. overflowY="auto"
 	allowsjust this element to be scrollable
- * @param {DashboardProps} { username, ...rest }
+ * @param {DashboardProps} { username, w, h, ...rest }
  * @returns The Dashboard Component
  */
 function Dashboard({ username, ...rest }: DashboardProps) {
