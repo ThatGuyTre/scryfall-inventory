@@ -1,4 +1,4 @@
-import CardGrid from "@/components/index/CardList";
+import CardList from "@/components/index/CardList";
 import Header from "@/components/index/Header";
 import { Grid, GridItem } from "@chakra-ui/react";
 
@@ -56,7 +56,7 @@ function Dashboard({ username, ...rest }: DashboardProps) {
 				}}
 				area={"main"}>
 
-				<CardGrid />
+				<CardList />
 
 			</GridItem>
 

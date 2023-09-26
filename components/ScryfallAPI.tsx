@@ -142,6 +142,8 @@ export type GameCardProps = {
   scryfall_uri: string;
 };
 
+let cardKey = 0;
+
 export async function fetchRandomCard(): Promise<GameCardProps> {
   try {
     const response = await fetch("https://api.scryfall.com/cards/random");
@@ -156,7 +158,7 @@ export async function fetchRandomCard(): Promise<GameCardProps> {
       description: data.oracle_text,
       imageSrc: data.image_uris?.art_crop || data.card_faces[0].image_uris?.art_crop || "",
       imageAlt: data.name,
-      key: data.tcgplayer_id + "",
+      key: cardKey++ + "",
       scryfall_uri: data.scryfall_uri,
     };
 
