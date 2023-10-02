@@ -19,7 +19,7 @@ export default function MenuTab({ text }: MenuTabProps) {
 			height='48px'
 			width='200px'
 			border='2px'
-			borderColor='green.500'
+			borderColor='desaturatedGreen'
 			onClick={function () {
 				onButtonClick(text);
 			  }}
