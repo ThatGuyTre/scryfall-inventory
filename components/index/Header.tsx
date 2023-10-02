@@ -1,5 +1,6 @@
 import { Button, HStack, Heading, Spacer, useMediaQuery } from "@chakra-ui/react";
 import { useState } from "react";
+import MenuTab from "./MenuTab";
 
 /**
  * HeaderProps are the parameters passed into the Header object.
@@ -47,14 +48,9 @@ export default function Header({ username }: HeaderProps) {
 				{welcomeMessage}
 			</Heading>
 			<Spacer />
-			<Button
-				color="transparent"
-				mr={3}
-				_hover={
-					{ bg: "lightOrange", textColor: "offWhite" }
-				}>
-					maybe this should be a view button
-			</Button>
+			<MenuTab text="Add a Deck"/>
+			<MenuTab text="Search your Inventory"/>
+			<MenuTab text="Find a Commander Deck"/>
 		</HStack>
 	);
 }
