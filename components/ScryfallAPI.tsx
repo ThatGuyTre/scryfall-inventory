@@ -1,5 +1,3 @@
-import React, { useEffect, useState } from "react";
-
 export type APICardProps = {
   object: string;
   id: string;
@@ -142,29 +140,30 @@ export type GameCardProps = {
   scryfall_uri: string;
 };
 
-let cardKey = 0;
+export async function fetchRandomCard(signal?: AbortSignal): Promise<GameCardProps> {
+	const response = await fetch("https://api.scryfall.com/cards/random", {
+		headers: { "Accept": "application/json" },
+		signal,
+	});
 
-export async function fetchRandomCard(): Promise<GameCardProps> {
-  try {
-    const response = await fetch("https://api.scryfall.com/cards/random");
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
-    }
-    const data = await response.json();
+	if (!response.ok) {
+		throw new Error(`HTTP error! Status: ${response.status}`);
+	}
 
-    // Format the randomCard data into GameCardProps
-    const formatted: GameCardProps = {
-      title: data.name,
-      description: data.oracle_text,
-      imageSrc: data.image_uris?.art_crop || data.card_faces[0].image_uris?.art_crop || "",
-      imageAlt: data.name,
-      key: cardKey++ + "",
-      scryfall_uri: data.scryfall_uri,
-    };
+	const data = await response.json();
 
-    return formatted;
-  } catch (error) {
-    console.error("Error fetching random card:", error);
-    throw error; // Re-throw the error to be handled by the caller
-  }
+	// Format the randomCard data into GameCardProps. Double faced cards carry
+	// their art on the faces rather than on the card itself, hence the fallback.
+	const formatted: GameCardProps = {
+		title: data.name,
+		description: data.oracle_text ?? data.card_faces?.[0]?.oracle_text ?? "",
+		imageSrc: data.image_uris?.art_crop || data.card_faces?.[0]?.image_uris?.art_crop || "",
+		imageAlt: data.name,
+		// Scryfall's own id keys the card, so a card drawn twice reuses one key
+		// and React can drop the duplicate rather than warn about it.
+		key: data.id,
+		scryfall_uri: data.scryfall_uri,
+	};
+
+	return formatted;
 }

@@ -1,13 +1,13 @@
-import { defineStyleConfig } from '@chakra-ui/react'
+import { defineStyleConfig } from "@chakra-ui/react"
 
 const Input = defineStyleConfig({
 
-  variants: {
-    personal_info_input: {
-      color: '#ffffff',
-      backgroundColor:'#ff0000'
-    }
-  },
+	variants: {
+		personal_info_input: {
+			color: "#ffffff",
+			backgroundColor:"#ff0000"
+		}
+	},
 
 })
 

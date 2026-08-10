@@ -35,3 +35,10 @@ yarn-error.log*
 next-env.d.ts
 
 /src/data/default-cards*
+
+# the bundled inventory database
+/src/data/inventory.json
+/src/data/inventory.json.tmp
+
+# personal collection exports kept locally for testing
+/src/data/*.csv

@@ -1,0 +1,43 @@
+{
+	"name": "MTG Inventory Tool",
+	"short_name": "MTG Inventory",
+	"description": "A simple inventory of my MTG cards",
+	"start_url": "/",
+	"scope": "/",
+	"display": "standalone",
+	"orientation": "any",
+	"background_color": "#d3d3d3",
+	"theme_color": "#74b87d",
+	"icons": [
+		{
+			"src": "/icons/icon-192.png",
+			"sizes": "192x192",
+			"type": "image/png",
+			"purpose": "any"
+		},
+		{
+			"src": "/icons/icon-512.png",
+			"sizes": "512x512",
+			"type": "image/png",
+			"purpose": "any"
+		},
+		{
+			"src": "/icons/icon-maskable-512.png",
+			"sizes": "512x512",
+			"type": "image/png",
+			"purpose": "maskable"
+		}
+	],
+	"shortcuts": [
+		{
+			"name": "Inventory",
+			"short_name": "Inventory",
+			"url": "/inventory"
+		},
+		{
+			"name": "Import from ManaBox",
+			"short_name": "Import",
+			"url": "/importfrommanabox"
+		}
+	]
+}
