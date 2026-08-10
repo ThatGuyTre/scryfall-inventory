@@ -16,7 +16,6 @@ import {
 	ListItem,
 	Radio,
 	RadioGroup,
-	Select,
 	Stack,
 	StatGroup,
 	Text,
@@ -24,9 +23,9 @@ import {
 import { useRouter } from "next/router";
 import { ChangeEvent, useState } from "react";
 import { importManaBoxFile } from "@/src/lib/inventory/api";
-import { ImportMode, ImportSummary, LOCATION_KINDS } from "@/src/lib/inventory/types";
+import { ImportMode, ImportSummary } from "@/src/lib/inventory/types";
 import ImportStat from "./ImportStat";
-import { formatCount, titleCase } from "./format";
+import { formatCount } from "./format";
 
 /**
  * The ManaBox import screen.
@@ -44,8 +43,6 @@ export default function ImportManaBox() {
 
 	const [ file, setFile ] = useState<File | null>(null);
 	const [ mode, setMode ] = useState<ImportMode>("append");
-	const [ locationKind, setLocationKind ] = useState<string>("binder");
-	const [ locationName, setLocationName ] = useState<string>("");
 	const [ isImporting, setIsImporting ] = useState<boolean>(false);
 	const [ confirmingReplace, setConfirmingReplace ] = useState<boolean>(false);
 	const [ summary, setSummary ] = useState<ImportSummary | null>(null);
@@ -87,11 +84,8 @@ export default function ImportManaBox() {
 
 		try {
 			const csv = await file.text();
-			const location = locationName.trim()
-				? { kind: locationKind, name: locationName.trim() }
-				: undefined;
 
-			setSummary(await importManaBoxFile(csv, mode, location));
+			setSummary(await importManaBoxFile(csv, mode));
 		} catch (caught) {
 			setError(caught instanceof Error ? caught.message : "The import failed.");
 		} finally {
@@ -124,7 +118,8 @@ export default function ImportManaBox() {
 					<Text color="darkGreen" mt={2}>
 						Export your collection from ManaBox as a .csv file, then load it here. Cards are
 						matched on printing, finish, condition, language and where they are kept, so the
-						same card in a deck and in a binder stays on two separate rows.
+						same card in a deck and in a binder stays on two separate rows. Which deck or
+						binder holds each card comes from the export itself.
 					</Text>
 				</Box>
 
@@ -159,41 +154,6 @@ export default function ImportManaBox() {
 										Selected: {file.name} ({formatCount(Math.max(1, Math.round(file.size / 1024)))} KB)
 									</Text>
 								) : null}
-							</Box>
-
-							<Divider borderColor="lightGray" />
-
-							<Box>
-								<Text fontWeight="bold" color="gray" mb={1}>Where are these cards kept?</Text>
-								<Text fontSize="sm" color="darkGreen" mb={3}>
-									ManaBox exports a Binder Name and Binder Type for each row, and those
-									always win. This is the fallback for rows the file does not place, and
-									for older exports without those columns. Leave the name blank to file
-									them as unassigned.
-								</Text>
-								<Stack direction={{ base: "column", sm: "row" }} spacing={3}>
-									<Select
-										value={locationKind}
-										onChange={(event) => setLocationKind(event.target.value)}
-										maxW={{ base: "100%", sm: "160px" }}
-										background="white"
-										borderColor="desaturatedGreen"
-										aria-label="Kind of place"
-									>
-										{LOCATION_KINDS.map((kind) => (
-											<option key={kind} value={kind}>{titleCase(kind)}</option>
-										))}
-									</Select>
-									<Input
-										value={locationName}
-										onChange={(event) => setLocationName(event.target.value)}
-										placeholder="e.g. Mono Red Burn"
-										background="white"
-										borderColor="desaturatedGreen"
-										maxLength={120}
-										aria-label="Name of the deck or binder"
-									/>
-								</Stack>
 							</Box>
 
 							<Divider borderColor="lightGray" />

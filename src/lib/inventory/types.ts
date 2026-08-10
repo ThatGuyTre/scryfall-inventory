@@ -35,13 +35,9 @@ export type ImportMode = "replace" | "append";
  *
  * ManaBox calls this the binder type and exports values such as "deck",
  * "binder" and "list". It is a plain string rather than a union so that a value
- * ManaBox invents later is carried through instead of being dropped on import;
- * {@link LOCATION_KINDS} is only the list offered in the import form.
+ * ManaBox invents later is carried through instead of being dropped on import.
  */
 export type LocationKind = string;
-
-/** The kinds offered when filing cards by hand. */
-export const LOCATION_KINDS = ["deck", "binder", "list", "box"] as const;
 
 /** The kind given to cards that have not been filed anywhere. */
 export const UNASSIGNED_LOCATION_KIND = "unassigned";

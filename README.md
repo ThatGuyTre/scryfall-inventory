@@ -96,9 +96,9 @@ sits in both a deck and a binder.
 
 ### Where cards are kept
 
-Location comes from ManaBox's `Binder Name` and `Binder Type` columns, which
-always win. Exports without those columns fall back to the deck or binder chosen
-on the import form, and failing that the cards are filed as unassigned.
+Location comes from ManaBox's `Binder Name` and `Binder Type` columns. Rows
+without a binder name are filed as unassigned, which is treated as a location
+like any other — it can be filtered to and counted.
 
 The Inventory page filters by location in two ways: a whole kind — every deck,
 or every binder — or one named deck or binder. Both live in the URL, so a
@@ -172,7 +172,7 @@ No caller changes.
 | -------- | --------------------------- | -------------------------------------- |
 | `GET`    | `/api/inventory`            | One page of cards plus stats. Accepts `search`, `location`, `kind`, `limit` and `cursor`. |
 | `DELETE` | `/api/inventory`            | Empties the inventory.                 |
-| `POST`   | `/api/inventory/import`     | Imports a ManaBox CSV. Body: `{ mode, csv, location? }`. |
+| `POST`   | `/api/inventory/import`     | Imports a ManaBox CSV. Body: `{ mode, csv }`. |
 | `GET`    | `/api/inventory/locations`  | Every deck, binder and box, with what each holds. |
 | `GET`    | `/api/inventory/showcase`   | A random sample of the collection, joined to Scryfall art. Accepts `limit`. |
 | `GET`    | `/api/commanders`           | Scores commander decks. Accepts `pool`, `variant`, `colors`, `page`, `limit` and `depth`. |

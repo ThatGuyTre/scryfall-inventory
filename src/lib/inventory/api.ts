@@ -1,6 +1,6 @@
 import { DeckCoverage } from "../edhrec/coverage";
 import { DeckVariant } from "../edhrec/decks";
-import { CardLocation, ImportMode, ImportSummary, InventoryCard, InventoryLocation, InventoryStats } from "./types";
+import { ImportMode, ImportSummary, InventoryCard, InventoryLocation, InventoryStats } from "./types";
 
 /**
  * The wire contract between the inventory pages and /api/inventory.
@@ -54,8 +54,6 @@ export type InventoryImportRequest = {
 	mode: ImportMode,
 	/** The raw text of the ManaBox .csv file. */
 	csv: string,
-	/** Where to file rows whose export names no binder or deck. */
-	location?: CardLocation,
 }
 
 /**
@@ -173,12 +171,8 @@ export async function fetchInventoryPage(
  * @param mode "replace" to overwrite the inventory, "append" to add to it
  * @returns A summary of what was parsed and written
  */
-export async function importManaBoxFile(
-	csv: string,
-	mode: ImportMode,
-	location?: CardLocation,
-): Promise<ImportSummary> {
-	const body: InventoryImportRequest = { csv, mode, location };
+export async function importManaBoxFile(csv: string, mode: ImportMode): Promise<ImportSummary> {
+	const body: InventoryImportRequest = { csv, mode };
 
 	const response = await fetch("/api/inventory/import", {
 		method: "POST",

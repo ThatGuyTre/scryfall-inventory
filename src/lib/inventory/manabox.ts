@@ -16,9 +16,8 @@ import { CardFinish, CardLocation, InventoryCard, UNASSIGNED_LOCATION_KIND } fro
  * unrecognized columns are ignored, and only Name and Quantity are actually
  * required. That keeps older and newer exports importable without a code change.
  *
- * Where a card is kept comes from the "Binder Name" and "Binder Type" columns
- * when the export has them. Exports that predate those columns fall back to the
- * location chosen on the import form, and failing that the cards are unfiled.
+ * Where a card is kept comes from the "Binder Name" and "Binder Type" columns.
+ * Rows without a binder name are filed as unassigned.
  */
 
 /** Thrown when the file is readable but is clearly not a ManaBox export. */
@@ -130,23 +129,18 @@ function parsePrice(value: string): number | null {
 /**
  * Works out where a row's cards are kept.
  *
- * The file wins over the form: if an export names a binder or deck per row,
- * that is more specific than one location chosen for the whole import.
+ * Rows that name no binder are filed as unassigned, which is a location like
+ * any other rather than a special case — it can be filtered to and counted.
  *
  * @param record One CSV row keyed by normalized heading
- * @param fallback The location chosen on the import form, if any
  * @returns The kind and name to file these cards under
  */
-function parseLocation(record: Record<string, string>, fallback?: CardLocation): CardLocation {
+function parseLocation(record: Record<string, string>): CardLocation {
 	const name = field(record, "bindername", "binder", "folder", "foldername", "deck", "deckname");
 	const kind = field(record, "bindertype", "foldertype", "type").toLowerCase();
 
 	if (name) {
 		return { kind: kind || "binder", name };
-	}
-
-	if (fallback?.name.trim()) {
-		return { kind: fallback.kind || "binder", name: fallback.name.trim() };
 	}
 
 	return { kind: UNASSIGNED_LOCATION_KIND, name: "" };
@@ -162,15 +156,10 @@ function parseLocation(record: Record<string, string>, fallback?: CardLocation):
  *
  * @param csvText The raw contents of the exported .csv file
  * @param importedAt ISO timestamp stamped onto every row produced
- * @param fallbackLocation Where to file rows the file does not place itself
  * @returns The cards to store plus counts and warnings for the summary
  * @throws {ManaBoxFormatError} When the file has no usable header row
  */
-export function parseManaBoxCsv(
-	csvText: string,
-	importedAt: string,
-	fallbackLocation?: CardLocation,
-): ManaBoxParseResult {
+export function parseManaBoxCsv(csvText: string, importedAt: string): ManaBoxParseResult {
 	const { headers, records } = parseCsvRecords(csvText);
 
 	if (headers.length === 0) {
@@ -225,7 +214,7 @@ export function parseManaBoxCsv(
 			return;
 		}
 
-		const location = parseLocation(record, fallbackLocation);
+		const location = parseLocation(record);
 
 		const identity = {
 			name,

@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { ApiError, InventoryImportRequest } from "@/src/lib/inventory/api";
 import { ManaBoxFormatError } from "@/src/lib/inventory/manabox";
-import { importManaBoxCsv, parseCardLocation, parseImportMode } from "@/src/lib/inventory/service";
+import { importManaBoxCsv, parseImportMode } from "@/src/lib/inventory/service";
 import { DEFAULT_OWNER_ID, ImportSummary } from "@/src/lib/inventory/types";
 
 /**
@@ -45,12 +45,7 @@ export default async function handler(
 	}
 
 	try {
-		const summary = await importManaBoxCsv(
-			DEFAULT_OWNER_ID,
-			body.csv,
-			mode,
-			parseCardLocation(body.location),
-		);
+		const summary = await importManaBoxCsv(DEFAULT_OWNER_ID, body.csv, mode);
 
 		return res.status(200).json(summary);
 	} catch (error) {
