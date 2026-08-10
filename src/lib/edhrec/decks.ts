@@ -1,3 +1,4 @@
+import { normalizeCardName } from "../inventory/card";
 import { EdhrecUnavailableError, fetchEdhrecJson } from "./client";
 
 /**
@@ -138,6 +139,28 @@ export type AverageDeck = {
  * Artifacts and lands are spread across two lists apiece on EDHREC, so both are
  * merged before the top cards are taken.
  */
+/** The basic land types, normalized for comparison. */
+const BASIC_LAND_TYPES = ["plains", "island", "swamp", "mountain", "forest", "wastes"];
+
+/**
+ * Tests whether a card is a basic land.
+ *
+ * This matters more than it looks. EDHREC's "lands" list is ordered by play
+ * rate, and basics are the most played lands there are — Forest, Island, Plains
+ * and Swamp sit at positions two through five. Filling the non-basic land slots
+ * from that list therefore spent four of them on basics, which displaced four
+ * real lands from the deck and quietly counted basics towards coverage despite
+ * the page saying they were excluded.
+ *
+ * @param name The card name as EDHREC gives it
+ * @returns Whether it is a basic land, snow-covered ones included
+ */
+function isBasicLand(name: string): boolean {
+	const normalized = normalizeCardName(name);
+
+	return BASIC_LAND_TYPES.some((type) => normalized === type || normalized === `snowcovered${type}`);
+}
+
 const DECK_SLOTS: { count: keyof CommanderPage, tags: string[] }[] = [
 	{ count: "creature", tags: ["creatures"] },
 	{ count: "instant", tags: ["instants"] },
@@ -281,6 +304,9 @@ function fillSlot(lists: Map<string, CardView[]>, tags: string[], count: number,
 	const pool = tags
 		.flatMap((tag) => lists.get(tag) ?? [])
 		.filter((view): view is CardView & { name: string } => Boolean(view.name))
+		// Basics are counted separately, from the page's own basic-land figure,
+		// so they must never take a slot or reach the owned/missing lists.
+		.filter((view) => !isBasicLand(view.name))
 		// Most played first, so a slot is filled with the cards a deck is most
 		// likely to actually contain.
 		.sort((left, right) => (right.num_decks ?? 0) - (left.num_decks ?? 0));
