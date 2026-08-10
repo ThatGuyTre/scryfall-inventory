@@ -115,6 +115,16 @@ export default function CommanderFinder() {
 			setIsLoading(true);
 			setError(null);
 
+			/*
+				Clear the previous results rather than leaving them on screen
+				under the spinner. Switching bracket re-measures every deck, so
+				the old percentages describe a different question and reading
+				them while the new ones load is misleading. An expanded card
+				belongs to the old measurement too.
+			*/
+			setDecks([]);
+			setExpanded(null);
+
 			try {
 				const response = await fetchCommanderDecks(
 					{ pool, variant, colors: colorKey.split("").filter(Boolean), page, limit: PAGE_SIZE, depth },
@@ -345,6 +355,16 @@ export default function CommanderFinder() {
 						<Box>
 							<Heading size="sm" color="gray" noOfLines={2}>{deck.name}</Heading>
 							<Wrap spacing={1} mt={2}>
+								{/*
+									Says which average this score is against, so
+									a card is still self-explanatory once it has
+									been scrolled away from the selector.
+								*/}
+								<WrapItem>
+									<Tag size="sm" variant="outline" colorScheme="gray">
+										{variantLabel(deck.variant)}
+									</Tag>
+								</WrapItem>
 								{deck.colorIdentity.map((color) => (
 									<WrapItem key={color}>
 										<Tag size="sm" colorScheme={COLORS.find((c) => c.letter === color)?.scheme ?? "gray"}>
