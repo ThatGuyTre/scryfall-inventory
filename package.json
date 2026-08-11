@@ -10,16 +10,21 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "infra:changeset": "node infra/changeset.mjs"
   },
   "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.1107.0",
+    "@aws-sdk/lib-dynamodb": "^3.1107.0",
     "@chakra-ui/icons": "2.2.6",
     "@chakra-ui/next-js": "2.4.4",
     "@chakra-ui/react": "2.10.10",
     "@emotion/react": "11.14.0",
     "@emotion/styled": "11.14.1",
     "framer-motion": "12.43.0",
+    "idb": "^8.0.3",
     "next": "16.3.0",
+    "next-auth": "^4.24.15",
     "react": "18.3.1",
     "react-dom": "18.3.1"
   },
