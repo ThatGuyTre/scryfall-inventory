@@ -1,5 +1,6 @@
 import { ChakraProvider } from "@chakra-ui/react";
 import type { AppProps } from "next/app";
+import { SessionProvider } from "next-auth/react";
 import Head from "next/head";
 import { useEffect } from "react";
 import theme from "../theme/Theme";
@@ -14,7 +15,7 @@ import theme from "../theme/Theme";
  * @returns The App component
  *
  */
-export default function App({ Component, pageProps }: AppProps) {
+export default function App({ Component, pageProps: { session, ...pageProps } }: AppProps) {
 
 	/*
 		Registers the service worker that makes the site installable and
@@ -38,9 +39,15 @@ export default function App({ Component, pageProps }: AppProps) {
 				<meta name="description" content="A simple inventory of my MTG cards" />
 				<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 			</Head>
-			<ChakraProvider theme={theme}>
-				<Component {...pageProps} />
-			</ChakraProvider>
+			{/*
+				SessionProvider wraps everything so any component can ask who is
+				signed in without the answer being threaded down through props.
+			*/}
+			<SessionProvider session={session}>
+				<ChakraProvider theme={theme}>
+					<Component {...pageProps} />
+				</ChakraProvider>
+			</SessionProvider>
 		</>
 	);
 }

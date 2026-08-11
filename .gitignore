@@ -36,9 +36,11 @@ next-env.d.ts
 
 /src/data/default-cards*
 
-# the bundled inventory database
-/src/data/inventory.json
-/src/data/inventory.json.tmp
+# the local stand-in databases: collections, accounts, groups, decklists.
+# A pattern rather than a list, so a new local store cannot be committed by
+# being forgotten here. These hold real emails and card collections.
+/src/data/*.json
+/src/data/*.json.tmp
 
 # personal collection exports kept locally for testing
 /src/data/*.csv

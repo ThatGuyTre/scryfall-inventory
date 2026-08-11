@@ -14,6 +14,7 @@ import {
 	Text,
 	useDisclosure,
 } from "@chakra-ui/react";
+import AccountMenu from "../account/AccountMenu";
 import MenuTab from "./MenuTab";
 
 /**
@@ -32,6 +33,7 @@ const APP_TITLE = "MTG Inventory Tool";
 const MENU_TABS = [
 	{ text: "Inventory", href: "/inventory" },
 	{ text: "My Binders", href: "/addadeck" },
+	{ text: "Groups", href: "/groups" },
 	{ text: "Find a Commander Deck", href: "/findacommanderdeck" },
 ];
 
@@ -103,6 +105,13 @@ export default function Header() {
 					<MenuTab key={tab.href} text={tab.text} href={tab.href} />
 				))}
 			</HStack>
+
+			{/*
+				The account control sits outside the collapsing tab list, so
+				signing in stays one tap away on a phone rather than being
+				buried in the drawer.
+			*/}
+			<AccountMenu />
 
 			<IconButton
 				display={{ base: "flex", xl: "none" }}
