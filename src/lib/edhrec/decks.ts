@@ -234,6 +234,25 @@ export type CommanderSource = {
 /** The five colors in the order Magic conventionally lists them. */
 const COLOR_ORDER = ["W", "U", "B", "R", "G"];
 
+/**
+ * Puts a color identity into WUBRG order.
+ *
+ * Done here, where the deck is built, rather than in the component that draws
+ * the tags: the order is a property of the data, not of one way of displaying
+ * it, and sorting during render would mean mutating state in place.
+ *
+ * @param colors The identity as EDHREC gives it, in any order
+ * @returns The same colors in WUBRG order, with anything unrecognized last
+ */
+function sortColorIdentity(colors: string[]): string[] {
+	return [
+		...COLOR_ORDER.filter((color) => colors.includes(color)),
+		// Nothing outside WUBRG is expected, but dropping it silently would be
+		// worse than showing it.
+		...colors.filter((color) => !COLOR_ORDER.includes(color)),
+	];
+}
+
 /** Full names, for describing a source without hardcoding EDHREC's guild names. */
 const COLOR_NAMES: Record<string, string> = { W: "White", U: "Blue", B: "Black", R: "Red", G: "Green" };
 
@@ -378,7 +397,7 @@ export async function fetchAverageDeck(slug: string, variant: DeckVariant = "any
 		variant,
 		artCrop: commander.image_uris?.[0]?.art_crop ?? "",
 		edhrecUrl: `https://edhrec.com/commanders/${slug}`,
-		colorIdentity: commander.color_identity ?? [],
+		colorIdentity: sortColorIdentity(commander.color_identity ?? []),
 		numDecks: commander.num_decks ?? 0,
 		basicLands: page.basic ?? 0,
 		cards,

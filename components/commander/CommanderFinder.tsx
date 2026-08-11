@@ -291,7 +291,7 @@ export default function CommanderFinder() {
 	 * @param emptyMessage What to say when there are none
 	 * @returns The block
 	 */
-	function renderCardList(heading: string, names: string[], total: number, scheme: string, emptyMessage: string) {
+	function renderCardList(heading: string, names: string[], scheme: string, emptyMessage: string) {
 		return (
 			<Box>
 				<Text fontWeight="bold" color="gray" fontSize="sm" mb={2}>{heading}</Text>
@@ -315,13 +315,6 @@ export default function CommanderFinder() {
 								</Tag>
 							</WrapItem>
 						))}
-						{total > names.length ? (
-							<WrapItem>
-								<Tag size="sm" variant="outline" colorScheme="gray">
-									+{formatCount(total - names.length)} more
-								</Tag>
-							</WrapItem>
-						) : null}
 					</Wrap>
 				)}
 			</Box>
@@ -365,8 +358,7 @@ export default function CommanderFinder() {
 										{variantLabel(deck.variant)}
 									</Tag>
 								</WrapItem>
-								{/* Show color identity in WUBRG order */}
-								{deck.colorIdentity.sort((c1, c2) => COLORS.findIndex((c) => c.letter === c1) - COLORS.findIndex((c) => c.letter === c2)).map((color) => (
+								{deck.colorIdentity.map((color) => (
 									<WrapItem key={color}>
 										<Tag size="sm" colorScheme={COLORS.find((c) => c.letter === color)?.scheme ?? "gray"}>
 											{color}
@@ -438,14 +430,12 @@ export default function CommanderFinder() {
 								{renderCardList(
 									`Missing (${formatCount(deck.consideredCards - deck.ownedCount)})`,
 									deck.missing,
-									deck.consideredCards - deck.ownedCount,
 									"red",
 									"Nothing — you can build this.",
 								)}
 								{renderCardList(
 									`Already owned (${formatCount(deck.ownedCount)})`,
 									deck.owned,
-									deck.ownedCount,
 									"green",
 									"None yet.",
 								)}
@@ -488,7 +478,7 @@ export default function CommanderFinder() {
 										<Radio value="nodeck" colorScheme="green" alignItems="flex-start">
 											<Text color="gray" fontWeight="bold">Only cards not in a deck</Text>
 											<Text fontSize="sm" color="darkGreen">
-												Don't worry about taking any decks apart.
+												{"Don't worry about taking any decks apart."}
 											</Text>
 										</Radio>
 										<Radio value="all" colorScheme="green" alignItems="flex-start">
