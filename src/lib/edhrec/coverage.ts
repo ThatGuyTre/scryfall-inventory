@@ -6,9 +6,6 @@ import { AverageDeck, DeckVariant } from "./decks";
  * Measures how much of a commander deck a collection already covers.
  */
 
-/** How many missing cards to name in the response before it stops being useful. */
-const MAX_LISTED_CARDS = 40;
-
 /** How complete a deck must be to be worth calling out. */
 export const WELL_COVERED_THRESHOLD = 60;
 
@@ -76,7 +73,7 @@ export function measureCoverage(deck: AverageDeck, index: CardNameIndex): DeckCo
 		ownedCount: owned.length,
 		coverage: consideredCards === 0 ? 0 : Math.round((owned.length / consideredCards) * 100),
 		ownsCommander: owned.includes(deck.name),
-		owned: owned.slice(0, MAX_LISTED_CARDS),
-		missing: missing.slice(0, MAX_LISTED_CARDS),
+		owned: owned,
+		missing: missing,
 	};
 }

@@ -4,7 +4,6 @@ import { buildSortKey, decodeCursor, encodeCursor, matchesSearch, normalizeCardN
 import { CardNameIndex, clampLimit, InventoryRepository, NameIndexOptions } from "./repository";
 import {
 	CardPage,
-	INVENTORY_SCHEMA_VERSION,
 	InventoryCard,
 	InventoryLocation,
 	InventoryStats,
@@ -31,7 +30,6 @@ import {
 
 /** The on-disk document. Owners are nested so one file can hold several. */
 type InventoryDocument = {
-	version: number,
 	owners: Record<string, Record<string, InventoryCard>>,
 }
 
@@ -97,7 +95,6 @@ export function createJsonInventoryRepository(options: JsonRepositoryOptions = {
 			const parsed = JSON.parse(raw) as Partial<InventoryDocument>;
 
 			document = {
-				version: parsed.version ?? INVENTORY_SCHEMA_VERSION,
 				owners: parsed.owners ?? {},
 			};
 		} catch (error) {
@@ -108,7 +105,7 @@ export function createJsonInventoryRepository(options: JsonRepositoryOptions = {
 				console.error("Could not read the inventory file, starting empty:", error);
 			}
 
-			document = { version: INVENTORY_SCHEMA_VERSION, owners: {} };
+			document = { owners: {} };
 		}
 
 		return document;

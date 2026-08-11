@@ -85,12 +85,12 @@ export type DeckVariant = "any" | "exhibition" | "core" | "upgraded" | "optimize
 
 /** The variants offered, in the order they are shown. */
 export const DECK_VARIANTS: { value: DeckVariant, label: string }[] = [
-	{ value: "any", label: "Any bracket" },
-	{ value: "exhibition", label: "1 Exhibition" },
-	{ value: "core", label: "2 Core" },
-	{ value: "upgraded", label: "3 Upgraded" },
-	{ value: "optimized", label: "4 Optimized" },
-	{ value: "cedh", label: "5 cEDH" },
+	{ value: "any", label: "Most Played Cards" },
+	{ value: "exhibition", label: "B1: Exhibition" },
+	{ value: "core", label: "B2: Core" },
+	{ value: "upgraded", label: "B3: Upgraded" },
+	{ value: "optimized", label: "B4: Optimized" },
+	{ value: "cedh", label: "B5: cEDH" },
 	{ value: "budget", label: "Budget" },
 	{ value: "expensive", label: "Expensive" },
 ];

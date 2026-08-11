@@ -365,17 +365,18 @@ export default function CommanderFinder() {
 										{variantLabel(deck.variant)}
 									</Tag>
 								</WrapItem>
-								{deck.colorIdentity.map((color) => (
+								{/* Show color identity in WUBRG order */}
+								{deck.colorIdentity.sort((c1, c2) => COLORS.findIndex((c) => c.letter === c1) - COLORS.findIndex((c) => c.letter === c2)).map((color) => (
 									<WrapItem key={color}>
 										<Tag size="sm" colorScheme={COLORS.find((c) => c.letter === color)?.scheme ?? "gray"}>
-											{COLORS.find((c) => c.letter === color)?.name ?? color}
+											{color}
 										</Tag>
 									</WrapItem>
 								))}
 								{deck.ownsCommander ? (
-									<WrapItem><Tag size="sm" colorScheme="purple">You own the commander</Tag></WrapItem>
+									<WrapItem><Tag size="sm" colorScheme="purple">Commander Owned</Tag></WrapItem>
 								) : (
-									<WrapItem><Tag size="sm" colorScheme="orange">Commander missing</Tag></WrapItem>
+									<WrapItem><Tag size="sm" colorScheme="orange">Commander Not Owned</Tag></WrapItem>
 								)}
 							</Wrap>
 						</Box>
@@ -388,7 +389,7 @@ export default function CommanderFinder() {
 						<HStack spacing={3} align="center">
 							<CircularProgress
 								value={deck.coverage}
-								size="68px"
+								size="69px"
 								thickness="10px"
 								color={coverageColor(deck.coverage)}
 								trackColor="lightGray"
@@ -405,7 +406,7 @@ export default function CommanderFinder() {
 									{formatCount(deck.ownedCount)} of {formatCount(deck.consideredCards)} cards
 								</Text>
 								<Text color="darkGreen" fontSize="xs">
-									Plus {formatCount(deck.basicLands)} basics, not counted.
+									{formatCount(deck.basicLands)} basic lands not counted
 								</Text>
 							</Box>
 						</HStack>
@@ -487,11 +488,11 @@ export default function CommanderFinder() {
 										<Radio value="nodeck" colorScheme="green" alignItems="flex-start">
 											<Text color="gray" fontWeight="bold">Only cards not in a deck</Text>
 											<Text fontSize="sm" color="darkGreen">
-												Leaves out anything filed under a deck, so nothing has to be taken apart.
+												Don't worry about taking any decks apart.
 											</Text>
 										</Radio>
 										<Radio value="all" colorScheme="green" alignItems="flex-start">
-											<Text color="gray" fontWeight="bold">My whole collection</Text>
+											<Text color="gray" fontWeight="bold">Entire collection</Text>
 											<Text fontSize="sm" color="darkGreen">
 												Every card you own, including cards already sleeved into a deck.
 											</Text>
@@ -522,7 +523,7 @@ export default function CommanderFinder() {
 								</Box>
 
 								<Box>
-									<Text fontWeight="bold" color="gray" mb={2}>Colors you want to build in</Text>
+									<Text fontWeight="bold" color="gray" mb={2}>Commander Color Identity</Text>
 									<Wrap spacing={2}>
 										{COLORS.map((color) => {
 											const isOn = colors.includes(color.letter);

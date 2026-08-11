@@ -5,14 +5,6 @@
  */
 
 /**
- * Bumped whenever the persisted document shape changes incompatibly.
- *
- * 2 — cards gained a location, which is part of card identity, so ids written
- *     by version 1 no longer match. Re-import to move a version 1 document over.
- */
-export const INVENTORY_SCHEMA_VERSION = 2;
-
-/**
  * The inventory is scoped to an owner so the storage layer already looks the
  * way a shared, hosted database needs to look. There is a single local user
  * today, but this is the value that becomes the DynamoDB partition key.

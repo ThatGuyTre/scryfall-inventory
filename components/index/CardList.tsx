@@ -27,7 +27,7 @@ import { formatCount, locationLabel } from "@/components/inventory/format";
  */
 
 /** How many cards to show at once. */
-const CARD_COUNT = 10;
+const CARD_COUNT = 25;
 
 export default function CardList() {
 	const router = useRouter();
@@ -140,7 +140,7 @@ export default function CardList() {
 						<Text color="darkGreen" fontSize="sm">
 							Showing {cards.length} of {formatCount(uniqueCards)} unique cards
 							{" · "}
-							{formatCount(totalQuantity)} held
+							{formatCount(totalQuantity)} in collection
 						</Text>
 						<Button
 							size="sm"
@@ -152,7 +152,7 @@ export default function CardList() {
 							onClick={refresh}
 							alignSelf={{ base: "stretch", sm: "auto" }}
 						>
-							Show me others
+							Shuffle
 						</Button>
 					</Stack>
 				) : null}

@@ -75,7 +75,7 @@ export default function GameCard({ title, description, imageSrc, imageAlt, scryf
 						<Heading size={{ base: "md", md: "lg" }} color="gray" noOfLines={1}>
 							{title}
 						</Heading>
-						{quantity ? <Badge colorScheme="green">{quantity}x</Badge> : null}
+						{quantity ? <Badge colorScheme="green" textTransform="lowercase">{quantity}x</Badge> : null}
 						{location ? <Badge colorScheme="purple">{location}</Badge> : null}
 					</HStack>
 					<Text fontSize={{ base: "xs", md: "sm" }} color="darkGreen" noOfLines={{ base: 3, sm: 2, md: 3 }}>
