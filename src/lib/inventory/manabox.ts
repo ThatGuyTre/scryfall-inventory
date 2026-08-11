@@ -156,10 +156,15 @@ function parseLocation(record: Record<string, string>): CardLocation {
  *
  * @param csvText The raw contents of the exported .csv file
  * @param importedAt ISO timestamp stamped onto every row produced
+ * @param ownerId Whose collection these rows belong to
  * @returns The cards to store plus counts and warnings for the summary
  * @throws {ManaBoxFormatError} When the file has no usable header row
  */
-export function parseManaBoxCsv(csvText: string, importedAt: string): ManaBoxParseResult {
+export function parseManaBoxCsv(
+	csvText: string,
+	importedAt: string,
+	ownerId: string,
+): ManaBoxParseResult {
 	const { headers, records } = parseCsvRecords(csvText);
 
 	if (headers.length === 0) {
@@ -234,12 +239,16 @@ export function parseManaBoxCsv(csvText: string, importedAt: string): ManaBoxPar
 		const card: InventoryCard = {
 			...identity,
 			id: buildCardId(identity),
+			ownerId,
 			setName: field(record, "setname"),
 			rarity: field(record, "rarity").toLowerCase(),
 			quantity,
 			purchasePrice: parsePrice(field(record, "purchaseprice", "price")),
 			purchasePriceCurrency: field(record, "purchasepricecurrency", "currency").toUpperCase() || null,
 			manaboxId: field(record, "manaboxid") || null,
+			// ManaBox's own timestamp, kept verbatim. Nothing reads it yet; it is
+			// the owner's data and discarding it would lose it for good.
+			addedAt: field(record, "added", "addedat", "dateadded") || null,
 			updatedAt: importedAt,
 		};
 

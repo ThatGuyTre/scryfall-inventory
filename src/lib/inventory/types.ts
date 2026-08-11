@@ -54,6 +54,12 @@ export type InventoryLocation = {
 /**
  * One physical stack of identical cards.
  *
+ * A row is deliberately a row of a ManaBox export, plus an owner. Every column
+ * ManaBox writes is kept — including `Added`, which the app has no use for yet
+ * but which is the owner's data and would be gone on the next re-import if
+ * discarded. Only four fields are the app's own: the two keys, the owner, and
+ * the write timestamp.
+ *
  * Two rows are the same card only if every property that affects which physical
  * stack it belongs to matches: printing, finish, condition, language,
  * alteration — and where it is kept, because the same card sleeved in a deck
@@ -63,6 +69,17 @@ export type InventoryLocation = {
 export type InventoryCard = {
 	/** Stable, deterministic key. The DynamoDB sort-key suffix. */
 	id: string,
+	/**
+	 * Whose collection this row belongs to, and so also who imported it —
+	 * groups grant read access only, so nobody writes into someone else's
+	 * collection and the two can never differ.
+	 *
+	 * Redundant with the DynamoDB partition key and with the owner a local store
+	 * files it under, and stored anyway: the moment rows from several people are
+	 * merged — which is the whole point of group decklist coverage — a row
+	 * without this has lost track of whose card it is.
+	 */
+	ownerId: string,
 	/** Scryfall's UUID for the printing. Empty when an export omits it. */
 	scryfallId: string,
 	name: string,
@@ -88,7 +105,13 @@ export type InventoryCard = {
 	 * is the partition key of the location index a DynamoDB driver would add.
 	 */
 	locationKey: string,
-	/** ISO 8601 timestamp of the last write that touched this row. */
+	/**
+	 * ManaBox's own "Added" column: when the owner added the card in that app.
+	 * Null when the export has no such column. Kept because it is theirs, not
+	 * because anything reads it yet.
+	 */
+	addedAt: string | null,
+	/** ISO 8601 timestamp of the last write this app made to the row. */
 	updatedAt: string,
 }
 

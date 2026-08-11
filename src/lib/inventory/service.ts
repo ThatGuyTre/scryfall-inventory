@@ -24,7 +24,7 @@ export async function importManaBoxCsv(
 	mode: ImportMode,
 ): Promise<ImportSummary> {
 	const importedAt = new Date().toISOString();
-	const parsed = parseManaBoxCsv(csvText, importedAt);
+	const parsed = parseManaBoxCsv(csvText, importedAt, ownerId);
 	const repository = getInventoryRepository();
 
 	const result = mode === "replace"
