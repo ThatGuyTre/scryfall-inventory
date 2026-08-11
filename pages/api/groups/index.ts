@@ -30,7 +30,13 @@ export default async function handler(
 			res.setHeader("Cache-Control", "no-store");
 
 			return res.status(200).json({
-				groups: entries.map(({ group, role, memberCount }) => ({ ...group, role, memberCount })),
+				groups: entries.map(({ group, role, status, memberCount, invitedCount }) => ({
+					...group,
+					role,
+					status,
+					memberCount,
+					invitedCount,
+				})),
 			});
 		}
 
@@ -43,7 +49,13 @@ export default async function handler(
 
 			const group = await accounts.createGroup(caller.userId, name);
 
-			return res.status(201).json({ ...group, role: "owner", memberCount: 1 });
+			return res.status(201).json({
+				...group,
+				role: "owner",
+				status: "accepted",
+				memberCount: 1,
+				invitedCount: 0,
+			});
 		}
 
 		res.setHeader("Allow", "GET, POST");

@@ -45,6 +45,19 @@ export type ProfileEdit = {
 /** What a member may do in a group. */
 export type GroupRole = "owner" | "member";
 
+/**
+ * Whether a membership has been agreed to.
+ *
+ * Being added to a group means the other members can read your collection, so it
+ * takes two people: an owner invites, and the invitee accepts. Until they do,
+ * the membership exists but grants nothing — an invitation is a question, not a
+ * decision someone else makes for you.
+ *
+ * Declining deletes the membership outright rather than recording a refusal,
+ * because a "declined" row would only serve to stop the owner asking again.
+ */
+export type MembershipStatus = "invited" | "accepted";
+
 /** A group, as its own record. */
 export type Group = {
 	id: string,
@@ -59,13 +72,22 @@ export type GroupMembership = {
 	groupId: string,
 	userId: string,
 	role: GroupRole,
-	joinedAt: string,
+	status: MembershipStatus,
+	/** When they were invited. */
+	invitedAt: string,
+	/** When they accepted, or null while the invitation is outstanding. */
+	joinedAt: string | null,
 }
 
-/** A group with the caller's own role in it, for listing. */
+/** A group with the caller's own standing in it, for listing. */
 export type GroupSummary = Group & {
 	role: GroupRole,
+	/** The caller's own status, so a list can separate invitations from groups. */
+	status: MembershipStatus,
+	/** People who have accepted. Outstanding invitations are not members yet. */
 	memberCount: number,
+	/** Invitations still waiting on an answer. */
+	invitedCount: number,
 }
 
 /** A member of a group, with enough profile to show them on screen. */
@@ -76,8 +98,13 @@ export type GroupMember = {
 	firstName: string,
 	lastName: string,
 	role: GroupRole,
-	joinedAt: string,
-	/** Cards in that member's collection, so the UI can say what is on offer. */
+	status: MembershipStatus,
+	invitedAt: string,
+	joinedAt: string | null,
+	/**
+	 * Cards in that member's collection, so the UI can say what is on offer.
+	 * Zero for an outstanding invitation, since nothing is readable yet.
+	 */
 	cardCount: number,
 }
 

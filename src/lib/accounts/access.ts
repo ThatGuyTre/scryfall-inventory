@@ -30,10 +30,17 @@ export async function mayReadCollection(callerId: string, ownerId: string): Prom
 	const accounts = getAccountRepository();
 	const mine = await accounts.listGroupsForUser(callerId);
 
-	for (const { group } of mine) {
+	for (const { group, status } of mine) {
+		// An invitation the caller has not accepted grants them nothing. Sharing
+		// runs both ways: neither side's collection opens until both have agreed
+		// to be in the group.
+		if (status !== "accepted") {
+			continue;
+		}
+
 		const members = await accounts.listMembers(group.id);
 
-		if (members.some((member) => member.userId === ownerId)) {
+		if (members.some((member) => member.userId === ownerId && member.status === "accepted")) {
 			return true;
 		}
 	}
@@ -42,17 +49,40 @@ export async function mayReadCollection(callerId: string, ownerId: string): Prom
 }
 
 /**
- * Whether a caller is a member of a group.
+ * Whether a caller is an accepted member of a group.
+ *
+ * Outstanding invitations deliberately return null: an invitee may answer the
+ * invitation, and nothing else, until they accept.
  *
  * @param callerId Who is asking
  * @param groupId Which group
- * @returns Their role, or null when they are not a member
+ * @returns Their role, or null when they have not accepted
  */
 export async function roleInGroup(callerId: string, groupId: string): Promise<"owner" | "member" | null> {
 	const members = await getAccountRepository().listMembers(groupId);
 	const mine = members.find((member) => member.userId === callerId);
 
-	return mine?.role ?? null;
+	if (!mine || mine.status !== "accepted") {
+		return null;
+	}
+
+	return mine.role;
+}
+
+/**
+ * Reads a caller's membership whatever its status, for answering invitations.
+ *
+ * @param callerId Who is asking
+ * @param groupId Which group
+ * @returns Their status, or null when there is no membership at all
+ */
+export async function membershipStatus(
+	callerId: string,
+	groupId: string,
+): Promise<"invited" | "accepted" | null> {
+	const members = await getAccountRepository().listMembers(groupId);
+
+	return members.find((member) => member.userId === callerId)?.status ?? null;
 }
 
 /**
@@ -75,7 +105,12 @@ export async function describeMembers(groupId: string): Promise<GroupMember[]> {
 
 	for (const membership of memberships) {
 		const profile: UserProfile | undefined = profiles[membership.userId];
-		const stats = await inventory.stats(membership.userId);
+
+		// Nothing of an invitee's collection is readable until they accept, so
+		// their card count is not something to advertise either.
+		const cardCount = membership.status === "accepted"
+			? (await inventory.stats(membership.userId)).totalQuantity
+			: 0;
 
 		described.push({
 			userId: membership.userId,
@@ -84,8 +119,10 @@ export async function describeMembers(groupId: string): Promise<GroupMember[]> {
 			firstName: profile?.firstName ?? "",
 			lastName: profile?.lastName ?? "",
 			role: membership.role,
+			status: membership.status,
+			invitedAt: membership.invitedAt,
 			joinedAt: membership.joinedAt,
-			cardCount: stats.totalQuantity,
+			cardCount,
 		});
 	}
 
@@ -113,6 +150,10 @@ export async function summariseGroup(groupId: string, callerId: string): Promise
 	return {
 		...group,
 		role: mine?.role ?? "member",
-		memberCount: members.length,
+		status: mine?.status ?? "invited",
+		// Only people who have accepted are members. An outstanding invitation is
+		// counted separately so an owner can see it is still waiting.
+		memberCount: members.filter((member) => member.status === "accepted").length,
+		invitedCount: members.filter((member) => member.status === "invited").length,
 	};
 }

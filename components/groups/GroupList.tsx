@@ -17,7 +17,7 @@ import {
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-import { createGroup, fetchGroups } from "@/src/lib/accounts/api";
+import { answerInvitation, createGroup, fetchGroups } from "@/src/lib/accounts/api";
 import { GroupSummary } from "@/src/lib/accounts/types";
 import { formatCount } from "@/components/inventory/format";
 
@@ -35,6 +35,7 @@ export default function GroupList() {
 	const [ name, setName ] = useState<string>("");
 	const [ isLoading, setIsLoading ] = useState<boolean>(true);
 	const [ isCreating, setIsCreating ] = useState<boolean>(false);
+	const [ answering, setAnswering ] = useState<string | null>(null);
 	const [ error, setError ] = useState<string | null>(null);
 
 	useEffect(() => {
@@ -90,6 +91,39 @@ export default function GroupList() {
 		}
 	}
 
+	/**
+	 * Accepts or declines an invitation, then updates the list in place.
+	 *
+	 * @param groupId Which group
+	 * @param action What to do about it
+	 */
+	async function answer(groupId: string, action: "accept" | "decline") {
+		setAnswering(groupId);
+		setError(null);
+
+		try {
+			await answerInvitation(groupId, action);
+
+			if (action === "decline") {
+				// Declining deletes the membership, so the row goes entirely.
+				setGroups((current) => current.filter((group) => group.id !== groupId));
+			} else {
+				setGroups((current) => current.map((group) => (
+					group.id === groupId
+						? { ...group, status: "accepted", memberCount: group.memberCount + 1, invitedCount: Math.max(0, group.invitedCount - 1) }
+						: group
+				)));
+			}
+		} catch (caught) {
+			setError(caught instanceof Error ? caught.message : "Could not answer that invitation.");
+		} finally {
+			setAnswering(null);
+		}
+	}
+
+	const invitations = groups.filter((group) => group.status === "invited");
+	const joined = groups.filter((group) => group.status === "accepted");
+
 	if (status === "unauthenticated") {
 		return (
 			<Box maxW="700px" m="auto" px={{ base: 3, md: "1vh" }} py={{ base: 4, md: "4vh" }}>
@@ -121,6 +155,56 @@ export default function GroupList() {
 						else&apos;s cards.
 					</Text>
 				</Box>
+
+				{/*
+					Invitations come first. Being in a group means other people can
+					read your collection, so an unanswered invitation is the most
+					important thing on this page.
+				*/}
+				{invitations.length > 0 ? (
+					<Stack spacing={3}>
+						<Heading size="md" color="gray">
+							{invitations.length === 1 ? "You have an invitation" : `You have ${invitations.length} invitations`}
+						</Heading>
+						{invitations.map((group) => (
+							<Card key={group.id} background="offWhite" borderRadius={5} borderLeft="4px solid" borderLeftColor="desaturatedGreen">
+								<CardBody px={{ base: 3, md: 5 }}>
+									<Stack direction={{ base: "column", md: "row" }} justify="space-between" align={{ base: "stretch", md: "center" }} spacing={3}>
+										<Box>
+											<HStack spacing={2} flexWrap="wrap">
+												<Heading size="sm" color="gray">{group.name}</Heading>
+												<Badge colorScheme="orange">Invited</Badge>
+											</HStack>
+											<Text color="darkGreen" fontSize="sm" mt={1}>
+												{formatCount(group.memberCount)} member{group.memberCount === 1 ? "" : "s"} already.
+												Accepting lets them read your collection, and you read theirs.
+											</Text>
+										</Box>
+										<HStack spacing={2} flexShrink={0}>
+											<Button
+												size="sm"
+												colorScheme="green"
+												isLoading={answering === group.id}
+												onClick={() => answer(group.id, "accept")}
+											>
+												Accept
+											</Button>
+											<Button
+												size="sm"
+												variant="outline"
+												colorScheme="red"
+												isDisabled={answering === group.id}
+												onClick={() => answer(group.id, "decline")}
+											>
+												Decline
+											</Button>
+										</HStack>
+									</Stack>
+								</CardBody>
+							</Card>
+						))}
+					</Stack>
+				) : null}
 
 				<Card background="offWhite" borderRadius={5}>
 					<CardBody px={{ base: 3, md: 5 }}>
@@ -165,7 +249,7 @@ export default function GroupList() {
 					</HStack>
 				) : null}
 
-				{!isLoading && groups.length === 0 && !error ? (
+				{!isLoading && joined.length === 0 && invitations.length === 0 && !error ? (
 					<Card background="offWhite" borderRadius={5}>
 						<CardBody>
 							<Stack spacing={2} align="flex-start">
@@ -179,9 +263,9 @@ export default function GroupList() {
 					</Card>
 				) : null}
 
-				{groups.length > 0 ? (
+				{joined.length > 0 ? (
 					<SimpleGrid columns={{ base: 1, sm: 2, lg: 3 }} spacing={4}>
-						{groups.map((group) => (
+						{joined.map((group) => (
 							<Card
 								key={group.id}
 								background="offWhite"
@@ -200,6 +284,7 @@ export default function GroupList() {
 										</HStack>
 										<Text color="darkGreen" fontSize="sm">
 											{formatCount(group.memberCount)} member{group.memberCount === 1 ? "" : "s"}
+											{group.invitedCount > 0 ? ` · ${formatCount(group.invitedCount)} invited` : ""}
 										</Text>
 										<Button size="sm" variant="outline" borderColor="desaturatedGreen" alignSelf="flex-start">
 											Open

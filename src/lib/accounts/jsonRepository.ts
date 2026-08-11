@@ -63,14 +63,41 @@ export function createJsonAccountRepository(options: JsonAccountRepositoryOption
 	});
 
 	/**
-	 * Counts a group's members without loading them.
+	 * Reads a membership, treating one written before invitations existed as
+	 * already accepted. Without that, an older local document would silently
+	 * lock everyone out of their own groups.
+	 *
+	 * @param document The whole document
+	 * @param key The membership key
+	 * @returns The membership, or undefined
+	 */
+	function membership(document: AccountsDocument, key: string): GroupMembership | undefined {
+		const found = document.memberships[key];
+
+		if (found && !found.status) {
+			found.status = "accepted";
+			found.invitedAt = found.invitedAt ?? found.joinedAt ?? new Date().toISOString();
+		}
+
+		return found;
+	}
+
+	/**
+	 * Counts a group's people, split by whether they have accepted.
 	 *
 	 * @param document The whole document
 	 * @param groupId Which group
-	 * @returns How many people are in it
+	 * @returns Accepted members, and outstanding invitations
 	 */
-	function countMembers(document: AccountsDocument, groupId: string): number {
-		return Object.values(document.memberships).filter((m) => m.groupId === groupId).length;
+	function countMembers(document: AccountsDocument, groupId: string): { members: number, invited: number } {
+		const all = Object.keys(document.memberships)
+			.map((key) => membership(document, key))
+			.filter((entry): entry is GroupMembership => Boolean(entry) && entry!.groupId === groupId);
+
+		return {
+			members: all.filter((entry) => entry.status === "accepted").length,
+			invited: all.filter((entry) => entry.status === "invited").length,
+		};
 	}
 
 	return {
@@ -167,12 +194,15 @@ export function createJsonAccountRepository(options: JsonAccountRepositoryOption
 
 				document.groups[group.id] = group;
 
-				// The creator is a member from the start, so a group is never
-				// left in a state where nobody can see it.
+				// The creator is an accepted member from the start — nobody needs
+				// to accept an invitation to their own group, and a group with no
+				// members would be invisible to everyone including its owner.
 				document.memberships[membershipKey(group.id, ownerId)] = {
 					groupId: group.id,
 					userId: ownerId,
 					role: "owner",
+					status: "accepted",
+					invitedAt: now,
 					joinedAt: now,
 				};
 
@@ -183,13 +213,20 @@ export function createJsonAccountRepository(options: JsonAccountRepositoryOption
 		async listGroupsForUser(userId) {
 			const document = await store.read();
 
-			return Object.values(document.memberships)
-				.filter((membership) => membership.userId === userId)
-				.map((membership) => ({
-					group: document.groups[membership.groupId],
-					role: membership.role,
-					memberCount: countMembers(document, membership.groupId),
-				}))
+			return Object.keys(document.memberships)
+				.map((key) => membership(document, key))
+				.filter((entry): entry is GroupMembership => Boolean(entry) && entry!.userId === userId)
+				.map((entry) => {
+					const counts = countMembers(document, entry.groupId);
+
+					return {
+						group: document.groups[entry.groupId],
+						role: entry.role,
+						status: entry.status,
+						memberCount: counts.members,
+						invitedCount: counts.invited,
+					};
+				})
 				// A membership can outlive its group if a delete half-failed.
 				.filter((entry) => Boolean(entry.group))
 				.sort((left, right) => left.group.name.localeCompare(right.group.name));
@@ -202,30 +239,66 @@ export function createJsonAccountRepository(options: JsonAccountRepositoryOption
 		async listMembers(groupId) {
 			const document = await store.read();
 
-			return Object.values(document.memberships)
-				.filter((membership) => membership.groupId === groupId)
-				.sort((left, right) => left.joinedAt.localeCompare(right.joinedAt));
+			return Object.keys(document.memberships)
+				.map((key) => membership(document, key))
+				.filter((entry): entry is GroupMembership => Boolean(entry) && entry!.groupId === groupId)
+				.sort((left, right) => left.invitedAt.localeCompare(right.invitedAt));
 		},
 
 		addMember(groupId, userId, role: GroupRole = "member") {
 			return store.write((document) => {
 				const key = membershipKey(groupId, userId);
-				const existing = document.memberships[key];
+				const existing = membership(document, key);
 
+				// Re-inviting must never knock an accepted member back to invited.
 				if (existing) {
 					return existing;
 				}
 
-				const membership: GroupMembership = {
+				const created: GroupMembership = {
 					groupId,
 					userId,
 					role,
-					joinedAt: new Date().toISOString(),
+					status: "invited",
+					invitedAt: new Date().toISOString(),
+					joinedAt: null,
 				};
 
-				document.memberships[key] = membership;
+				document.memberships[key] = created;
 
-				return membership;
+				return created;
+			});
+		},
+
+		acceptInvitation(groupId, userId) {
+			return store.write((document) => {
+				const existing = membership(document, membershipKey(groupId, userId));
+
+				if (!existing) {
+					throw new Error("There is no invitation to accept.");
+				}
+
+				if (existing.status === "accepted") {
+					return existing;
+				}
+
+				existing.status = "accepted";
+				existing.joinedAt = new Date().toISOString();
+
+				return existing;
+			});
+		},
+
+		async declineInvitation(groupId, userId) {
+			await store.write((document) => {
+				const key = membershipKey(groupId, userId);
+				const existing = membership(document, key);
+
+				// Declining is for invitations. Someone who has already accepted is
+				// leaving, which is a different act and not offered yet.
+				if (existing && existing.status === "invited") {
+					delete document.memberships[key];
+				}
 			});
 		},
 

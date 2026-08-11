@@ -134,6 +134,26 @@ export async function removeGroupMember(groupId: string, userId: string): Promis
 }
 
 /**
+ * Answers an invitation to a group.
+ *
+ * @param groupId Which group
+ * @param action Whether to accept or decline
+ * @returns What happened
+ */
+export async function answerInvitation(
+	groupId: string,
+	action: "accept" | "decline",
+): Promise<{ status: "accepted" | "declined" }> {
+	const response = await fetch(`/api/groups/${groupId}/invitation`, {
+		method: "POST",
+		headers: { "Content-Type": "application/json" },
+		body: JSON.stringify({ action }),
+	});
+
+	return readJson<{ status: "accepted" | "declined" }>(response);
+}
+
+/**
  * Lists a group's saved decklists.
  *
  * @param groupId Which group

@@ -124,7 +124,11 @@ export default function DecklistCoverage({ groupId, members }: DecklistCoverageP
 		setError(null);
 
 		try {
-			const loaded = await Promise.all(members.map(async (member) => {
+			// Only people who have accepted. An invitee's collection is not
+			// readable yet, and asking for it would rightly be refused.
+			const joined = members.filter((member) => member.status === "accepted");
+
+			const loaded = await Promise.all(joined.map(async (member) => {
 				const collection = await fetchCollection(member.userId);
 
 				return {

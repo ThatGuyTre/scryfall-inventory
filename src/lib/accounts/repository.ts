@@ -1,4 +1,12 @@
-import { Group, GroupDecklist, GroupMembership, GroupRole, ProfileEdit, UserProfile } from "./types";
+import {
+	Group,
+	GroupDecklist,
+	GroupMembership,
+	GroupRole,
+	MembershipStatus,
+	ProfileEdit,
+	UserProfile,
+} from "./types";
 
 /**
  * The storage contract for accounts and groups.
@@ -61,12 +69,22 @@ export interface AccountRepository {
 	createGroup(ownerId: string, name: string): Promise<Group>,
 
 	/**
-	 * Lists the groups a user belongs to.
+	 * Lists the groups a user belongs to or has been invited to.
+	 *
+	 * Outstanding invitations are included, since the point of listing is partly
+	 * to let someone answer them. Callers must check `status` before treating a
+	 * result as membership.
 	 *
 	 * @param userId The user id
-	 * @returns Their groups, with their role in each
+	 * @returns Their groups, with their standing in each
 	 */
-	listGroupsForUser(userId: string): Promise<{ group: Group, role: GroupRole, memberCount: number }[]>,
+	listGroupsForUser(userId: string): Promise<{
+		group: Group,
+		role: GroupRole,
+		status: MembershipStatus,
+		memberCount: number,
+		invitedCount: number,
+	}[]>,
 
 	/**
 	 * Reads one group.
@@ -85,14 +103,37 @@ export interface AccountRepository {
 	listMembers(groupId: string): Promise<GroupMembership[]>,
 
 	/**
-	 * Adds someone to a group. Safe to call when they are already a member.
+	 * Invites someone to a group. Safe to call when they are already invited or
+	 * a member; it will not downgrade an accepted membership back to invited.
 	 *
 	 * @param groupId The group id
-	 * @param userId Who to add
-	 * @param role What they may do
+	 * @param userId Who to invite
+	 * @param role What they may do once they accept
 	 * @returns The membership
 	 */
 	addMember(groupId: string, userId: string, role?: GroupRole): Promise<GroupMembership>,
+
+	/**
+	 * Accepts an outstanding invitation.
+	 *
+	 * @param groupId The group id
+	 * @param userId Who is accepting
+	 * @returns The now-accepted membership
+	 * @throws When there is no invitation to accept
+	 */
+	acceptInvitation(groupId: string, userId: string): Promise<GroupMembership>,
+
+	/**
+	 * Declines an invitation, deleting the membership.
+	 *
+	 * The same effect as being removed, expressed separately because a person
+	 * declining their own invitation is allowed where removing someone else is
+	 * not.
+	 *
+	 * @param groupId The group id
+	 * @param userId Who is declining
+	 */
+	declineInvitation(groupId: string, userId: string): Promise<void>,
 
 	/**
 	 * Removes someone from a group.

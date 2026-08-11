@@ -169,6 +169,7 @@ export default function GroupDetail({ groupId }: GroupDetailProps) {
 							{formatCount(group.memberCount)} member{group.memberCount === 1 ? "" : "s"}
 							{" · "}
 							{formatCount(members.reduce((total, member) => total + member.cardCount, 0))} cards between them
+							{group.invitedCount > 0 ? ` · ${formatCount(group.invitedCount)} invitation${group.invitedCount === 1 ? "" : "s"} outstanding` : ""}
 						</Text>
 					</Box>
 					<Button variant="outline" borderColor="desaturatedGreen" onClick={() => router.push("/groups")}>
@@ -241,11 +242,14 @@ export default function GroupDetail({ groupId }: GroupDetailProps) {
 														<HStack spacing={2} flexWrap="wrap">
 															<Text fontWeight="bold" color="gray">{member.username}</Text>
 															{member.role === "owner" ? <Badge colorScheme="purple">Owner</Badge> : null}
+															{member.status === "invited" ? <Badge colorScheme="orange">Invited</Badge> : null}
 														</HStack>
 														<Text fontSize="sm" color="darkGreen">
 															{member.email}
 															{" · "}
-															{formatCount(member.cardCount)} cards
+															{member.status === "invited"
+																? "Waiting on their answer"
+																: `${formatCount(member.cardCount)} cards`}
 														</Text>
 													</Box>
 													{role === "owner" && member.role !== "owner" ? (
@@ -256,7 +260,7 @@ export default function GroupDetail({ groupId }: GroupDetailProps) {
 															isLoading={isBusy}
 															onClick={() => remove(member.userId)}
 														>
-															Remove
+															{member.status === "invited" ? "Cancel invite" : "Remove"}
 														</Button>
 													) : null}
 												</Stack>
