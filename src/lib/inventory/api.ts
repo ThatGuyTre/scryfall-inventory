@@ -165,13 +165,13 @@ export async function fetchInventoryPage(
 }
 
 /**
- * Uploads a ManaBox export.
+ * Uploads a ManaBox or Deckbox export. The format is detected from its header.
  *
  * @param csv The raw text of the .csv file
  * @param mode "replace" to overwrite the inventory, "append" to add to it
  * @returns A summary of what was parsed and written
  */
-export async function importManaBoxFile(csv: string, mode: ImportMode): Promise<ImportSummary> {
+export async function importCollectionFile(csv: string, mode: ImportMode): Promise<ImportSummary> {
 	const body: InventoryImportRequest = { csv, mode };
 
 	const response = await fetch("/api/inventory/import", {

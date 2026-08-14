@@ -14,6 +14,9 @@ export const DEFAULT_OWNER_ID = "local";
 /** ManaBox records finish as a printing variant rather than a boolean. */
 export type CardFinish = "normal" | "foil" | "etched";
 
+/** Which app a collection was exported from. */
+export type CollectionSource = "manabox" | "deckbox";
+
 /**
  * How an import should treat the cards already in the inventory.
  *
@@ -95,7 +98,18 @@ export type InventoryCard = {
 	altered: boolean,
 	purchasePrice: number | null,
 	purchasePriceCurrency: string | null,
-	manaboxId: string | null,
+	/**
+	 * Which app this row was imported from, so a mixed collection can still say
+	 * where each row came from.
+	 */
+	source: CollectionSource,
+	/**
+	 * The exporting app's own id for the printing: ManaBox's "ManaBox ID" or
+	 * Deckbox's "Printing Id". Named for its role rather than for one app,
+	 * because it was `manaboxId` right up until a second importer existed and a
+	 * Deckbox row had to lie about what it held.
+	 */
+	sourceId: string | null,
 	/** What sort of place holds these cards, e.g. "deck". */
 	locationKind: LocationKind,
 	/** The name of that place, e.g. "Mono Red Burn". Empty when unfiled. */
@@ -162,9 +176,16 @@ export type WriteResult = {
 	totalQuantity: number,
 }
 
-/** The end-to-end result of a ManaBox import, surfaced directly in the UI. */
+/** The end-to-end result of an import, surfaced directly in the UI. */
 export type ImportSummary = {
 	mode: ImportMode,
+	/** Which app's export was recognised. */
+	source: CollectionSource,
+	/**
+	 * Columns the file had that this app has nowhere to put, named so the user
+	 * can see exactly what was not kept rather than assuming everything was.
+	 */
+	unmappedColumns: string[],
 	/** Data rows found in the file. */
 	rowsParsed: number,
 	/** Rows the parser could not use, e.g. missing a name or a quantity. */
