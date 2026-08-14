@@ -202,46 +202,45 @@ export default function ImportManaBox() {
 									}}
 								/>
 								{file ? (
-									<Stack spacing={2} mt={3}>
-										<Text fontSize="sm" color="darkGreen">
-											Selected: {file.name} ({formatCount(Math.max(1, Math.round(file.size / 1024)))} KB)
-										</Text>
-
-										{detection ? (
-											detection.source ? (
-												<Alert status="success" borderRadius={5} py={2}>
-													<AlertIcon />
-													<Box>
-														<HStack spacing={2} flexWrap="wrap">
-															<Text fontSize="sm" color="gray">Recognised as a</Text>
-															<Badge colorScheme="green">{detection.label} export</Badge>
-															<Text fontSize="sm" color="darkGreen">
-																· {formatCount(detection.headers.length)} columns
-															</Text>
-														</HStack>
-														{detection.unmappedColumns.length > 0 ? (
-															<Text fontSize="xs" color="darkGreen" mt={1}>
-																Not stored, because there is nowhere to put them:{" "}
-																{detection.unmappedColumns.join(", ")}.
-															</Text>
-														) : null}
-													</Box>
-												</Alert>
-											) : (
-												<Alert status="error" borderRadius={5} py={2}>
-													<AlertIcon />
-													<Box>
-														<AlertTitle fontSize="sm">Not a collection export</AlertTitle>
-														<AlertDescription fontSize="sm" display="block">
-															{detection.reason}
-														</AlertDescription>
-													</Box>
-												</Alert>
-											)
-										) : null}
-									</Stack>
+									<Text fontSize="sm" color="darkGreen" mt={2}>
+										Selected: {file.name} ({formatCount(Math.max(1, Math.round(file.size / 1024)))} KB)
+									</Text>
 								) : null}
 							</Box>
+
+							{/*
+								What was detected sits directly above the question it bears
+								on: whether to append or replace is a decision made knowing
+								which app's file was picked.
+							*/}
+							{detection ? (
+								detection.source ? (
+									<Alert status="info" borderRadius={5} py={2}>
+										<AlertIcon />
+										<Box>
+											<Text fontSize="sm" color="gray" fontWeight="bold">
+												Detected {detection.label} import
+											</Text>
+											<Text fontSize="xs" color="darkGreen">
+												{formatCount(detection.headers.length)} columns read
+												{detection.unmappedColumns.length > 0
+													? `. Not stored, because there is nowhere to put them: ${detection.unmappedColumns.join(", ")}.`
+													: "."}
+											</Text>
+										</Box>
+									</Alert>
+								) : (
+									<Alert status="error" borderRadius={5} py={2}>
+										<AlertIcon />
+										<Box>
+											<AlertTitle fontSize="sm">Not a collection export</AlertTitle>
+											<AlertDescription fontSize="sm" display="block">
+												{detection.reason}
+											</AlertDescription>
+										</Box>
+									</Alert>
+								)
+							) : null}
 
 							<Divider borderColor="lightGray" />
 

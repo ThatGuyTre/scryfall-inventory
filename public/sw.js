@@ -17,15 +17,15 @@
 */
 
 // Bumping this version drops every previously cached response.
-// v2: the inventory moved from /searchyourinventory to /inventory, so anything
-// an earlier install cached under the old path has to go.
-const CACHE_NAME = "scryfall-inventory-v2";
+// v3: the import page moved from /importfrommanabox to /import, and the groups
+// pages are new, so anything an earlier install cached has to go.
+const CACHE_NAME = "scryfall-inventory-v3";
 
 // Fetched on install so the app opens at least once with no connection.
 const PRECACHE_URLS = [
 	"/",
 	"/inventory",
-	"/importfrommanabox",
+	"/import",
 	"/manifest.webmanifest",
 	"/icons/icon-192.png",
 	"/icons/icon-512.png",

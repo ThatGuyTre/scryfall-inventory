@@ -1,7 +1,8 @@
 # MTG Inventory Tool
 
 A [Next.js](https://nextjs.org/) app for keeping track of a Magic: The Gathering
-collection. It imports a personal inventory from [ManaBox](https://www.manabox.app/),
+collection. It imports a personal inventory from [ManaBox](https://www.manabox.app/)
+or [Deckbox](https://deckbox.org/),
 illustrates it with card data from the [Scryfall API](https://scryfall.com/docs/api),
 and scores it against popular Commander decks using [EDHREC](https://edhrec.com/).
 
@@ -11,7 +12,7 @@ and scores it against popular Commander decks using [EDHREC](https://edhrec.com/
 | Inventory | `/inventory` | Searches and filters the collection, including by deck or binder. Also where importing starts. |
 | My Binders | `/addadeck` | Lists every deck, binder and box in the collection, with a way into each. |
 | Find a Commander Deck | `/findacommanderdeck` | Scores EDHREC's commanders against your cards. |
-| Import from ManaBox | `/importfrommanabox` | Loads a `.csv` export, replacing or appending to what is stored. Reached from the Inventory page rather than the header. |
+| Import a collection | `/import` | Loads a ManaBox or Deckbox `.csv` export, replacing or appending to what is stored. Reached from the Inventory page rather than the header. |
 
 ## Getting Started
 
@@ -74,11 +75,13 @@ Because a hard color filter leaves very few commanders in the overall top 100,
 **Find more** pulls in EDHREC's per-color rankings, which go far deeper. Mono
 white goes from 2 candidates to 101 after one click, and 161 after two.
 
-## Importing from ManaBox
+## Importing a collection
 
-Export your collection from the ManaBox app as a `.csv`, then open the Inventory
-page and choose **Import from ManaBox**. Pick what should happen to the cards
-already stored:
+Export your collection as a `.csv` from **ManaBox** or **Deckbox**, then open the
+Inventory page and choose **Import a collection**. Which app it came from is
+detected from the file's own header — in the browser when you pick it, and again
+on the server — so there is no format to choose. Pick what should happen to the
+cards already stored:
 
 - **Append** — keep the current inventory and add the file's quantities on top.
 - **Replace** — delete everything stored, then import the file as the whole

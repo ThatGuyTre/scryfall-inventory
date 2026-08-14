@@ -126,7 +126,7 @@ export default function DeckList() {
 
 				<Stack direction={{ base: "column", md: "row" }} justify="space-between" align={{ base: "stretch", md: "center" }} spacing={3}>
 					<Heading size={{ base: "md", md: "lg" }} color="gray">My Binders</Heading>
-					<Button colorScheme="green" onClick={() => router.push("/importfrommanabox")}>
+					<Button colorScheme="green" onClick={() => router.push("/import")}>
 						Import from ManaBox
 					</Button>
 				</Stack>
@@ -155,7 +155,7 @@ export default function DeckList() {
 									through its Binder Type column, or you can choose Deck and give it a
 									name when you import.
 								</Text>
-								<Button colorScheme="green" onClick={() => router.push("/importfrommanabox")}>
+								<Button colorScheme="green" onClick={() => router.push("/import")}>
 									Import from ManaBox
 								</Button>
 							</Stack>

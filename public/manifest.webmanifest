@@ -35,9 +35,9 @@
 			"url": "/inventory"
 		},
 		{
-			"name": "Import from ManaBox",
+			"name": "Import a collection",
 			"short_name": "Import",
-			"url": "/importfrommanabox"
+			"url": "/import"
 		}
 	]
 }

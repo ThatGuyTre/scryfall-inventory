@@ -591,7 +591,7 @@ export default function CommanderFinder() {
 										? "Switch to your whole collection, or import cards that are not filed under a deck."
 										: "Import a ManaBox .csv export and these decks will be scored against it."}
 								</Text>
-								<Button colorScheme="green" onClick={() => router.push("/importfrommanabox")}>
+								<Button colorScheme="green" onClick={() => router.push("/import")}>
 									Import from ManaBox
 								</Button>
 							</Stack>

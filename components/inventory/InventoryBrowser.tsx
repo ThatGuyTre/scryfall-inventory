@@ -297,7 +297,7 @@ export default function InventoryBrowser() {
 				<Stack direction={{ base: "column", md: "row" }} justify="space-between" align={{ base: "stretch", md: "flex-start" }} spacing={3}>
 					<Heading size={{ base: "md", md: "lg" }} color="gray">Your Inventory</Heading>
 					<Stack direction={{ base: "column", sm: "row" }} spacing={2}>
-						<Button colorScheme="green" onClick={() => router.push("/importfrommanabox")}>
+						<Button colorScheme="green" onClick={() => router.push("/import")}>
 							Import from ManaBox
 						</Button>
 						<Button
@@ -409,7 +409,7 @@ export default function InventoryBrowser() {
 										: "Import a ManaBox .csv export to fill your inventory."}
 								</Text>
 								{isFiltered ? null : (
-									<Button colorScheme="green" onClick={() => router.push("/importfrommanabox")}>
+									<Button colorScheme="green" onClick={() => router.push("/import")}>
 										Import from ManaBox
 									</Button>
 								)}

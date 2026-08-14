@@ -13,21 +13,6 @@ const nextConfig = {
 	env: {
 		NEXT_PUBLIC_APP_VERSION: version,
 	},
-
-	/**
-	 * The inventory used to live at /searchyourinventory. Bookmarks, and any
-	 * installed copy of the app whose service worker cached the old path, are
-	 * sent to the new one rather than a 404.
-	 */
-	async redirects() {
-		return [
-			{
-				source: "/searchyourinventory",
-				destination: "/inventory",
-				permanent: false,
-			},
-		];
-	},
 }
 
 module.exports = nextConfig

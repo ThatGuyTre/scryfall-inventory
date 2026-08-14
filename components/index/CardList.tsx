@@ -127,7 +127,7 @@ export default function CardList() {
 								<Text color="darkGreen">
 									Import a ManaBox .csv export and your own cards will show up here.
 								</Text>
-								<Button colorScheme="green" onClick={() => router.push("/importfrommanabox")}>
+								<Button colorScheme="green" onClick={() => router.push("/import")}>
 									Import from ManaBox
 								</Button>
 							</Stack>
