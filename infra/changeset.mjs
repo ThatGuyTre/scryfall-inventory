@@ -99,6 +99,10 @@ const args = [
 	`LogoutUrls=${logouts.join(",")}`,
 ];
 
+if (flags.profile) {
+	args.push("--profile", flags.profile);
+}
+
 if (flags.region) {
 	args.push("--region", flags.region);
 }
@@ -106,6 +110,9 @@ if (flags.region) {
 console.log("\n  Preparing a change set. Nothing will be created.\n");
 console.log(`    stack     ${stackName}`);
 console.log(`    template  ${path.relative(process.cwd(), TEMPLATE)}`);
+if (flags.profile) {
+	console.log(`    profile   ${flags.profile}`);
+}
 console.log(`    callbacks ${callbacks.join(", ")}`);
 console.log("");
 
