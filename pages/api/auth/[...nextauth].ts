@@ -3,7 +3,6 @@ import NextAuth, { type AuthOptions } from "next-auth";
 import CognitoProvider from "next-auth/providers/cognito";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { getAccountRepository } from "@/src/lib/accounts";
-import { secret } from "@aws-amplify/backend";
 
 /**
  * Sign-in.
@@ -26,21 +25,19 @@ import { secret } from "@aws-amplify/backend";
  * supplied it, so turning Cognito on is a matter of setting three variables.
  */
 
-/** True when the Cognito environment is complete. */
+/**
+ * True when the Cognito environment is complete.
+ *
+ * Amplify Hosting injects Console-configured environment variables — including
+ * ones marked secret — as plain `process.env` at build and runtime, so no
+ * special SDK call is needed to read them.
+ */
 export function isCognitoConfigured(): boolean {
-	if(process.env.NODE_ENV !== "production") {
-		return Boolean(
-			secret("COGNITO_CLIENT_ID") &&
-			secret("COGNITO_CLIENT_SECRET") &&
-			secret("COGNITO_ISSUER")
-		);
-	} else {
-		return Boolean(
-			process.env.COGNITO_CLIENT_ID &&
-			process.env.COGNITO_CLIENT_SECRET &&
-			process.env.COGNITO_ISSUER,
-		);
-	}
+	return Boolean(
+		process.env.COGNITO_CLIENT_ID &&
+		process.env.COGNITO_CLIENT_SECRET &&
+		process.env.COGNITO_ISSUER,
+	);
 }
 
 /** True when signing in by typing an email address is permitted. */
@@ -79,19 +76,11 @@ export function localUserId(email: string): string {
 const providers: AuthOptions["providers"] = [];
 
 if (isCognitoConfigured()) {
-	if(process.env.NODE_ENV !== "production") {
-		providers.push(CognitoProvider({
-			clientId: process.env.COGNITO_CLIENT_ID as string,
-			clientSecret: process.env.COGNITO_CLIENT_SECRET as string,
-			issuer: process.env.COGNITO_ISSUER as string,
-		}));
-	} else {
-		providers.push(CognitoProvider({
-			clientId: secret("COGNITO_CLIENT_ID") as string,
-			clientSecret: secret("COGNITO_CLIENT_SECRET") as string,
-			issuer: secret("COGNITO_ISSUER") as string,
-		}));
-	}
+	providers.push(CognitoProvider({
+		clientId: process.env.COGNITO_CLIENT_ID as string,
+		clientSecret: process.env.COGNITO_CLIENT_SECRET as string,
+		issuer: process.env.COGNITO_ISSUER as string,
+	}));
 }
 
 if (isLocalSignInAllowed()) {
