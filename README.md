@@ -150,16 +150,26 @@ store rather than only on a filesystem:
 
 ### Moving to DynamoDB
 
-`src/lib/inventory/dynamoRepository.ts` documents the intended single-table
-design — partition key `OWNER#<id>`, sort key `CARD#<sort key>` — and how each
-interface method maps onto a DynamoDB call. To finish it:
+`src/lib/inventory/dynamoRepository.ts` implements the single-table design:
+partition key `OWNER#<id>`, sort key `CARD#<sort key>`, and one secondary index
+keyed on the location kind that serves both location filters the UI offers. To
+use it, set `INVENTORY_DRIVER=dynamodb` and `INVENTORY_TABLE`, and give the
+runtime credentials that can read and write the table. No caller changes.
 
-1. `npm install @aws-sdk/client-dynamodb @aws-sdk/lib-dynamodb`
-2. Implement the methods in that file.
-3. Set `INVENTORY_DRIVER=dynamodb`, `INVENTORY_TABLE`, and the usual AWS region
-   and credential variables.
+There are no roll-up or counter items: `stats`, `locations` and `nameIndex`
+aggregate the owner's partition on read, projecting only what each one needs.
+Counters would make those reads constant-time and would also be a second source
+of truth that drifts the first time a write fails half way. A row stays a row of
+the original export, plus an owner.
 
-No caller changes.
+Two DynamoDB behaviors shape the code, and both are silent when got wrong:
+
+- **`Limit` applies before `FilterExpression`**, so a filtered query returns
+  short pages while more matches remain. `list` continues querying until the page
+  is full or the partition ends; a single query drops results instead.
+- **`contains()` is case sensitive**, so each row stores a lowercase `searchText`
+  attribute joining the five searchable fields. Without it a search would mean
+  reading the whole partition and filtering in memory.
 
 ### Environment variables
 
