@@ -27,9 +27,6 @@ import { getAccountRepository } from "@/src/lib/accounts";
 
 /** True when the Cognito environment is complete. */
 export function isCognitoConfigured(): boolean {
-	console.log("COGNITO_CLIENT_ID", process.env.COGNITO_CLIENT_ID?.toString().length);
-	console.log("COGNITO_CLIENT_SECRET", process.env.COGNITO_CLIENT_SECRET?.toString().length);
-	console.log("COGNITO_ISSUER", process.env.COGNITO_ISSUER?.toString().length);
 	return Boolean(
 		process.env.COGNITO_CLIENT_ID &&
 		process.env.COGNITO_CLIENT_SECRET &&
