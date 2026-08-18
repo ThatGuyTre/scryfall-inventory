@@ -151,4 +151,3 @@ if (amplifyAppId) {
 	console.log("       role up to the Amplify app. CloudFormation cannot do this step itself,");
 	console.log("       since the app is not a resource this stack manages.\n");
 }
-console.log("  infra/AWS-SETUP.md has the rest.\n");
