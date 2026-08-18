@@ -225,6 +225,9 @@ previous version cached.
 
 ## Deploying to AWS Amplify
 
+`infra/AMPLIFY-RUNBOOK.md` is the operational version of this section:
+the same reasoning plus the exact commands to deploy and to verify.
+
 Two Amplify behaviors trip this up, and both fail identically: the sign-in page
 reports that no sign-in method is configured while the console shows every value
 present.
