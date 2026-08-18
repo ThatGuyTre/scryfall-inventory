@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/pages/api/auth/[...nextauth]";
+import { getAuthOptions } from "@/pages/api/auth/[...nextauth]";
 import { ANONYMOUS_OWNER_ID } from "./types";
 
 /**
@@ -25,7 +25,7 @@ export type Caller = {
  * @returns The caller, or null when nobody is signed in
  */
 export async function readCaller(req: NextApiRequest, res: NextApiResponse): Promise<Caller | null> {
-	const session = await getServerSession(req, res, authOptions);
+	const session = await getServerSession(req, res, await getAuthOptions());
 
 	if (!session?.user?.id) {
 		return null;

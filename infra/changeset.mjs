@@ -87,9 +87,11 @@ if (siteUrl && siteUrl !== "true") {
 	logouts.push(siteUrl);
 }
 
-// The segment after "apps/" in the Amplify Hosting App ARN. Optional: the
-// stack works without it, just without the service role that lets Secret
-// management resolve into that app's process.env.
+// The segment after "apps/" in the Amplify Hosting App ARN. Optional: the stack
+// works without it, just without the two IAM roles for that app — including the
+// compute role the running app assumes to read its secrets out of Parameter
+// Store. Secret management never resolves into process.env by itself, whatever
+// role is attached; the app has to go and fetch them.
 const amplifyAppId = flags["amplify-app-id"] ?? "";
 
 const args = [
@@ -147,7 +149,15 @@ console.log("         aws cloudformation execute-change-set --change-set-name <a
 console.log("    3. Then read the outputs for your .env.local values:");
 console.log(`         aws cloudformation describe-stacks --stack-name ${stackName} --query "Stacks[0].Outputs"\n`);
 if (amplifyAppId) {
-	console.log("    4. Run the AttachAmplifyServiceRoleCommand output once, to wire the new");
-	console.log("       role up to the Amplify app. CloudFormation cannot do this step itself,");
-	console.log("       since the app is not a resource this stack manages.\n");
+	console.log("    4. Run the AttachAmplifyRolesCommand output once, to wire the new roles");
+	console.log("       up to the Amplify app. CloudFormation cannot do this step itself, since");
+	console.log("       the app is not a resource this stack manages. It attaches two roles: the");
+	console.log("       build role, and the compute role the running app assumes to read its");
+	console.log("       secrets. Attaching only the first leaves sign-in reporting that Cognito");
+	console.log("       is not configured.\n");
+	console.log("    5. Put COGNITO_CLIENT_ID, COGNITO_CLIENT_SECRET, COGNITO_ISSUER and");
+	console.log("       NEXTAUTH_SECRET in Amplify's Secret management, scoped to All branches.");
+	console.log("       They are read at runtime from the SecretsPath output, so they never");
+	console.log("       enter a build artifact. NEXTAUTH_URL is not a secret and belongs in");
+	console.log("       Environment variables, where amplify.yml forwards it.\n");
 }

@@ -1,9 +1,10 @@
 import { createHash } from "crypto";
 import NextAuth, { type AuthOptions } from "next-auth";
+import type { NextApiRequest, NextApiResponse } from "next";
 import CognitoProvider from "next-auth/providers/cognito";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { getAccountRepository } from "@/src/lib/accounts";
-import { isCognitoConfigured, isLocalSignInAllowed, readEnv } from "@/src/lib/accounts/authConfig";
+import { isCognitoConfigured, isLocalSignInAllowed, resolveConfig } from "@/src/lib/accounts/authConfig";
 
 /**
  * Sign-in.
@@ -50,93 +51,119 @@ export function localUserId(email: string): string {
 	].join("-");
 }
 
-const providers: AuthOptions["providers"] = [];
+/**
+ * Builds the sign-in options.
+ *
+ * Async, and rebuilt per request rather than once at module load, because the
+ * Cognito credentials are not necessarily in the environment: on Amplify they
+ * are Parameter Store entries fetched at runtime. Reading them is cached in
+ * `secretStore`, so this costs one network call per container per ten minutes,
+ * not one per request.
+ *
+ * Building the providers at module load — as this file used to — would have
+ * frozen the answer at import time, before any secret could be read, and no
+ * amount of correct configuration would have produced a Cognito button.
+ *
+ * @returns Options for next-auth
+ */
+export async function getAuthOptions(): Promise<AuthOptions> {
+	const config = await resolveConfig();
+	const providers: AuthOptions["providers"] = [];
 
-if (isCognitoConfigured()) {
-	providers.push(CognitoProvider({
-		clientId: readEnv("COGNITO_CLIENT_ID"),
-		clientSecret: readEnv("COGNITO_CLIENT_SECRET"),
-		issuer: readEnv("COGNITO_ISSUER"),
-	}));
-}
+	if (isCognitoConfigured(config)) {
+		providers.push(CognitoProvider({
+			clientId: config.read("COGNITO_CLIENT_ID"),
+			clientSecret: config.read("COGNITO_CLIENT_SECRET"),
+			issuer: config.read("COGNITO_ISSUER"),
+		}));
+	}
 
-if (isLocalSignInAllowed()) {
-	providers.push(CredentialsProvider({
-		id: "local",
-		name: "Local account",
-		credentials: {
-			email: { label: "Email", type: "email", placeholder: "you@example.com" },
-			username: { label: "Display name", type: "text", placeholder: "Optional" },
-		},
-		/**
-		 * Accepts any address. There is no password to check because there are no
-		 * passwords: this is a development stand-in for Cognito.
-		 *
-		 * @param credentials What was typed
-		 * @returns The user, or null when no address was given
-		 */
-		async authorize(credentials) {
-			const email = credentials?.email?.trim().toLowerCase();
+	if (isLocalSignInAllowed(config)) {
+		providers.push(CredentialsProvider({
+			id: "local",
+			name: "Local account",
+			credentials: {
+				email: { label: "Email", type: "email", placeholder: "you@example.com" },
+				username: { label: "Display name", type: "text", placeholder: "Optional" },
+			},
+			/**
+			 * Accepts any address. There is no password to check because there are
+			 * no passwords: this is a development stand-in for Cognito.
+			 *
+			 * @param credentials What was typed
+			 * @returns The user, or null when no address was given
+			 */
+			async authorize(credentials) {
+				const email = credentials?.email?.trim().toLowerCase();
 
-			if (!email || !email.includes("@")) {
-				return null;
-			}
+				if (!email || !email.includes("@")) {
+					return null;
+				}
 
-			return {
-				id: localUserId(email),
-				email,
-				name: credentials?.username?.trim() || email.split("@")[0],
-			};
-		},
-	}));
-}
-
-export const authOptions: AuthOptions = {
-	providers,
-	session: { strategy: "jwt" },
-	// next-auth insists on a secret. Signing dev tokens with a fixed string is
-	// fine; a deployment sets its own and must, since this one is in the repo.
-	secret: process.env.NEXTAUTH_SECRET ?? "development-only-secret-do-not-use-in-production",
-	pages: {
-		signIn: "/signin",
-	},
-	callbacks: {
-		/**
-		 * Puts the user id on the token, and creates the profile row on first
-		 * sign-in. This is the only place a user record is brought into
-		 * existence, so it must be safe to run on every sign-in.
-		 */
-		async jwt({ token, user, account }) {
-			// `user` is only present on the sign-in itself, not on later reads.
-			if (user) {
-				// Cognito's subject claim is the id; local sign-in already made one.
-				const id = account?.provider === "cognito" ? (token.sub as string) : (user.id as string);
-				const email = user.email ?? "";
-
-				const profile = await getAccountRepository().upsertUser(id, {
+				return {
+					id: localUserId(email),
 					email,
-					username: user.name ?? email.split("@")[0] ?? "",
-				});
+					name: credentials?.username?.trim() || email.split("@")[0],
+				};
+			},
+		}));
+	}
 
-				token.userId = profile.id;
-				token.username = profile.username;
-			}
-
-			return token;
+	return {
+		providers,
+		session: { strategy: "jwt" },
+		// next-auth insists on a secret. Signing dev tokens with a fixed string is
+		// fine; a deployment sets its own and must, since this one is in the repo.
+		secret: config.read("NEXTAUTH_SECRET") || "development-only-secret-do-not-use-in-production",
+		pages: {
+			signIn: "/signin",
 		},
+		callbacks: {
+			/**
+			 * Puts the user id on the token, and creates the profile row on first
+			 * sign-in. This is the only place a user record is brought into
+			 * existence, so it must be safe to run on every sign-in.
+			 */
+			async jwt({ token, user, account }) {
+				// `user` is only present on the sign-in itself, not on later reads.
+				if (user) {
+					// Cognito's subject claim is the id; local sign-in already made one.
+					const id = account?.provider === "cognito" ? (token.sub as string) : (user.id as string);
+					const email = user.email ?? "";
 
-		/**
-		 * Copies the id onto the session, which is what the browser sees.
-		 */
-		async session({ session, token }) {
-			if (session.user) {
-				session.user.id = (token.userId as string) ?? (token.sub as string) ?? "";
-				session.user.username = (token.username as string) ?? "";
-			}
+					const profile = await getAccountRepository().upsertUser(id, {
+						email,
+						username: user.name ?? email.split("@")[0] ?? "",
+					});
 
-			return session;
+					token.userId = profile.id;
+					token.username = profile.username;
+				}
+
+				return token;
+			},
+
+			/**
+			 * Copies the id onto the session, which is what the browser sees.
+			 */
+			async session({ session, token }) {
+				if (session.user) {
+					session.user.id = (token.userId as string) ?? (token.sub as string) ?? "";
+					session.user.username = (token.username as string) ?? "";
+				}
+
+				return session;
+			},
 		},
-	},
-};
+	};
+}
 
-export default NextAuth(authOptions);
+/**
+ * The next-auth route.
+ *
+ * next-auth supports being handed its options per request, which is what makes
+ * the async resolution above possible.
+ */
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+	return NextAuth(req, res, await getAuthOptions());
+}

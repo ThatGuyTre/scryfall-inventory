@@ -181,6 +181,11 @@ No caller changes.
 callback URLs are built from it, so sign-in redirects back to a host that does not
 exist.
 
+On a deployment these do not all come from the environment. The Cognito
+credentials and `NEXTAUTH_SECRET` are read from AWS Systems Manager Parameter
+Store at runtime instead, which is what keeps them out of the build; see
+[Deploying to AWS Amplify](#deploying-to-aws-amplify) for what belongs where.
+
 ### Checking what a deployment can actually see
 
 When a hosting console insists a variable is set and the app insists it is not,
@@ -220,43 +225,73 @@ previous version cached.
 
 ## Deploying to AWS Amplify
 
-Amplify needs two things that are easy to get wrong, and both fail the same way:
-the sign-in page reports that no sign-in method is configured, while the console
-shows every value present.
+Two Amplify behaviors trip this up, and both fail identically: the sign-in page
+reports that no sign-in method is configured while the console shows every value
+present.
 
 **Console secrets are not environment variables.** Amplify's *Secret management*
-stores SSM Parameter Store entries. They never appear in `process.env` under
-their own names, so a value kept there is invisible to this app no matter how it
-is spelled. Everything in the table above has to be an *Environment variable*.
+stores AWS Systems Manager Parameter Store entries. They never appear in
+`process.env` under their own names, so nothing reads them by accident and no
+spelling of `COGNITO_CLIENT_ID` will find them.
 
 **Environment variables do not reach the server runtime on their own.** A
 Next.js server has no access to the build environment by default — AWS does this
-deliberately, so that build-time secrets are not handed to the SSR function.
-`amplify.yml` bridges the gap by writing the named variables into
-`.env.production` before `next build`, which Next.js then loads. A variable
-added in the console but not named in `amplify.yml` still will not arrive.
+deliberately, so build-time secrets are not handed to the SSR function.
+`amplify.yml` bridges the gap for non-sensitive settings by writing the named
+ones into `.env.production` before `next build`. A setting added in the console
+but not named there still will not arrive.
 
-That bridge has a cost: `.env.production` is part of the deployment artifact, so
-anyone who can read the deployment can read the values written into it. An
-issuer URL and a client id do not matter. `COGNITO_CLIENT_SECRET` and
-`NEXTAUTH_SECRET` do, and the alternative is reading them from SSM at runtime
-under the app's service role.
+Secrets deliberately do not use that bridge. `.env.production` is part of the
+deployment artifact, so anything written into it is readable by anyone who can
+read the deployment — not somewhere to keep a Cognito client secret. Instead
+`src/lib/config/secretStore.ts` reads them from Parameter Store at runtime, and
+`resolveConfig()` merges the two sources, with the environment winning where
+both hold a name.
 
-`NEXTAUTH_URL` must be the origin the browser actually uses. A branch-level
-value overrides the all-branches one, so a branch served on a custom domain
-needs that domain, not its `amplifyapp.com` address. A trailing slash is fine —
-next-auth normalizes it.
+### What goes where
+
+| Setting | Where |
+| ------- | ----- |
+| `COGNITO_CLIENT_ID`, `COGNITO_CLIENT_SECRET`, `COGNITO_ISSUER` | Secret management, **All branches** |
+| `NEXTAUTH_SECRET` | Secret management, **All branches** |
+| `NEXTAUTH_URL` | Environment variables — not a secret, and needed at build |
+| `DIAGNOSTICS_TOKEN` | Secret management, when you want the diagnostics route |
+
+Secrets must be scoped to **All branches**. Those live at
+`/amplify/shared/<app id>/<name>`, a path a running app can construct.
+Branch-scoped secrets get an Amplify-generated hash in their path that the
+runtime cannot derive, so they are not supported.
+
+`NEXTAUTH_URL` must be the origin the browser actually uses. A branch-level value
+overrides the all-branches one, so a branch on a custom domain needs that domain
+rather than its `amplifyapp.com` address. A trailing slash is fine — next-auth
+normalizes it.
+
+### The compute role
+
+Reading Parameter Store at runtime needs credentials, which come from an **SSR
+compute role**. This is not the same thing as the app's service role, and the
+distinction is the whole trap:
+
+- `--iam-service-role-arn` is the build role. It grants the running app nothing.
+- `--compute-role-arn` is assumed by the SSR compute function itself.
+
+`infra/stack.yaml` creates both and `AttachAmplifyRolesCommand` attaches both.
+Attaching only the first leaves a fully configured app insisting Cognito is
+absent. The compute role is scoped to reading and decrypting exactly this app's
+shared secret path, because its credentials are live inside the SSR runtime and
+inherit to any code-execution bug in the app.
 
 ### The filesystem is read only
 
-Sign-in creates a profile row on every sign-in, and the JSON driver writes to
+Sign-in creates a profile row every time, and the JSON driver writes to
 `src/data/accounts.json`. Amplify's SSR compute is a Lambda, whose filesystem is
 read only outside `/tmp`, so that write throws and sign-in fails *after* Cognito
-has authenticated successfully — which looks like a Cognito problem and is not.
+has authenticated — which looks like a Cognito problem and is not.
 
-Pointing `ACCOUNTS_FILE` and `INVENTORY_FILE` at `/tmp` gets sign-in working,
-but the files are per-container and vanish on a cold start. Finishing the
-DynamoDB driver is the actual fix.
+Pointing `ACCOUNTS_FILE` and `INVENTORY_FILE` at `/tmp` gets sign-in working, but
+the files are per-container and vanish on a cold start. Finishing the DynamoDB
+driver is the actual fix.
 
 ## Learn More
 

@@ -208,13 +208,66 @@ Resources:
               Service: amplify.amazonaws.com
             Action: sts:AssumeRole
       # Amplify's own managed policy for a hosting/backend service role. It is
-      # scoped to Amplify's operations (not account-wide), and is what covers
-      # the ssm:GetParametersByPath + kms:Decrypt that Secret management needs
-      # to resolve COGNITO_CLIENT_ID and friends into process.env at build and
-      # SSR runtime. A hand-rolled policy risks missing a permission Amplify
-      # needs elsewhere and failing just as opaquely as having no role at all.
+      # scoped to Amplify's operations rather than being account-wide.
+      #
+      # This role covers builds. It does NOT give the running app access to
+      # anything: a service role and an SSR compute role are separate, attached
+      # with separate flags, and assumed by separate things. Believing otherwise
+      # is what makes a correctly configured deployment insist that Cognito is
+      # not set up, so see AmplifyComputeRole below for the runtime half.
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/AdministratorAccess-Amplify
+      Tags:
+        - Key: Project
+          Value: !Ref ProjectName
+
+  # The role the SSR compute function itself assumes, which is what lets the
+  # running app read its secrets out of Parameter Store instead of having the
+  # build bake them into a deployment artifact.
+  #
+  # Least privilege, and deliberately narrow: read access to exactly the path
+  # Amplify keeps this app's "all branches" secrets under, and permission to
+  # decrypt them. Nothing else. Amplify's docs are blunt about why that matters
+  # — these credentials are live in the SSR runtime, so any code execution bug in
+  # the app inherits whatever this role can do.
+  AmplifyComputeRole:
+    Type: AWS::IAM::Role
+    Condition: HasAmplifyAppId
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: amplify.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: ReadAmplifySharedSecrets
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              # GetParametersByPath is what the app calls, so it can read every
+              # secret in one request without knowing their names in advance.
+              # GetParameters is included because it is the natural way to fetch
+              # a single named secret, and granting it costs nothing extra given
+              # the path is already readable.
+              - Effect: Allow
+                Action:
+                  - ssm:GetParametersByPath
+                  - ssm:GetParameters
+                  - ssm:GetParameter
+                Resource:
+                  - !Sub "arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter/amplify/shared/${AmplifyAppId}/*"
+              # Secrets are SecureString, encrypted with the account's default
+              # SSM key. The ViaService condition means this permission is only
+              # usable through Parameter Store, so it cannot be turned into
+              # general-purpose decryption of anything else under that key.
+              - Effect: Allow
+                Action: kms:Decrypt
+                Resource: "*"
+                Condition:
+                  StringEquals:
+                    kms:ViaService: !Sub "ssm.${AWS::Region}.amazonaws.com"
       Tags:
         - Key: Project
           Value: !Ref ProjectName
@@ -248,12 +301,27 @@ Outputs:
       aws cognito-idp describe-user-pool-client --user-pool-id ${UserPool}
       --client-id ${UserPoolClient} --query UserPoolClient.ClientSecret --output text
 
-  AttachAmplifyServiceRoleCommand:
+  AttachAmplifyRolesCommand:
     Description: >
-      CloudFormation cannot reach into the Amplify app to attach this role
-      itself, since the app is not a resource this stack manages. Run this
-      once, after the role exists, to attach it.
+      CloudFormation cannot reach into the Amplify app to attach these roles
+      itself, since the app is not a resource this stack manages. Run this once,
+      after the roles exist, to attach both. The two flags are not
+      interchangeable: --iam-service-role-arn is the build role, and
+      --compute-role-arn is the one the running app assumes to read its secrets.
+      Attaching only the first is what leaves a fully configured app reporting
+      that Cognito is not set up.
     Condition: HasAmplifyAppId
     Value: !Sub >-
       aws amplify update-app --app-id ${AmplifyAppId}
       --iam-service-role-arn ${AmplifyServiceRole.Arn}
+      --compute-role-arn ${AmplifyComputeRole.Arn}
+
+  SecretsPath:
+    Description: >
+      Where the app expects its secrets. Set COGNITO_CLIENT_ID,
+      COGNITO_CLIENT_SECRET, COGNITO_ISSUER and NEXTAUTH_SECRET in the Amplify
+      console under Secret management, scoped to "All branches", and they land
+      here. Branch-scoped secrets get an Amplify-generated hash in their path
+      that the running app cannot derive, so they are not supported.
+    Condition: HasAmplifyAppId
+    Value: !Sub "/amplify/shared/${AmplifyAppId}/"

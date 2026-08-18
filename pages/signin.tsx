@@ -91,8 +91,10 @@ export default function SignInPage({ providers, hasLocal }: SignInPageProps) {
 								<AlertTitle>No sign-in method is configured</AlertTitle>
 								<AlertDescription>
 									Cognito needs COGNITO_CLIENT_ID, COGNITO_CLIENT_SECRET and COGNITO_ISSUER,
-									all three. A deployment also needs NEXTAUTH_URL set to its own origin.
-									/api/diagnostics/config reports which of them this process can see.
+									all three, from the environment or from Parameter Store. A deployment also
+									needs NEXTAUTH_URL set to its own origin. /api/diagnostics/config reports
+									which of them this process can see, and whether Parameter Store was
+									readable at all.
 								</AlertDescription>
 							</Box>
 						</Alert>
@@ -207,7 +209,7 @@ export const getServerSideProps: GetServerSideProps<SignInPageProps> = async () 
 		environment held. Reading the environment needs no request and cannot
 		disagree with what the auth route builds from the same module.
 	*/
-	const providers = describeProviders();
+	const providers = await describeProviders();
 
 	return {
 		props: {

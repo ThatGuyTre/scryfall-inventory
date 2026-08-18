@@ -47,7 +47,7 @@ function tokenMatches(provided: string, expected: string): boolean {
 	return timingSafeEqual(a, b);
 }
 
-export default function handler(
+export default async function handler(
 	req: NextApiRequest,
 	res: NextApiResponse<ConfigReport | ApiError>,
 ) {
@@ -74,5 +74,5 @@ export default function handler(
 
 	res.setHeader("Cache-Control", "no-store");
 
-	return res.status(200).json(buildConfigReport());
+	return res.status(200).json(await buildConfigReport());
 }

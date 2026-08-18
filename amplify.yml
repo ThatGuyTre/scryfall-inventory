@@ -1,26 +1,29 @@
 # AWS Amplify Hosting build settings.
 #
-# This file exists for one reason: Amplify does not give a Next.js server
-# runtime access to the environment variables set in its console. That is
-# deliberate on AWS's part — build environments hold secrets, and the SSR
-# compute function is not automatically trusted with them — but it means an
-# app that reads process.env on the server sees nothing at all unless the
-# build writes the values into a file Next.js loads. That is what the
-# `.env.production` line below does.
+# Amplify does not give a Next.js server runtime access to the environment
+# variables set in its console. That is deliberate on AWS's part — build
+# environments hold secrets, and the SSR compute function is not automatically
+# trusted with them — so an app that reads process.env on the server sees
+# nothing unless the build writes the values somewhere Next.js loads.
 #
-# Consequences worth knowing before you rely on this:
+# Only non-sensitive settings are forwarded here. Secrets are deliberately
+# absent: anything written to .env.production becomes part of the deployment
+# artifact and is readable by anyone who can read the deployment, which is not
+# an acceptable home for a Cognito client secret on a public site. Those live in
+# the console's Secret management (AWS Systems Manager Parameter Store) and are
+# fetched at runtime by src/lib/config/secretStore.ts, using the credentials of
+# the app's SSR compute role. AWS's own guidance agrees: "Don't use environment
+# variables to store secrets."
 #
-#   - Console *Secrets* are not environment variables. They are SSM Parameter
-#     Store entries and never appear in process.env under their own name, so
-#     every value this app needs must be an Environment variable instead.
-#   - Anything forwarded here lands in a build artifact. Whoever can read the
-#     deployment can read these values. That is acceptable for an issuer URL
-#     and a client id; for the two secrets it is a real trade against the
-#     alternative, which is reading them from SSM at runtime with the app's
-#     service role.
+# AWS_APP_ID is forwarded because the runtime needs it to build the Parameter
+# Store path, and it is not documented as reaching the SSR runtime on its own.
+# It is not a secret — it is the subdomain of the app's own URL. It has to be
+# forwarded rather than set by hand, because Amplify refuses to let you create a
+# console variable whose name starts with AWS.
 #
-# Names only are listed, so adding a variable in the console is not enough on
-# its own — it has to be named here too.
+# Names only are listed, so adding a setting in the console is not enough on its
+# own — non-secret settings have to be named here too. Secrets need no change
+# here at all, since they are read by path rather than by name.
 version: 1
 frontend:
   phases:
@@ -29,12 +32,12 @@ frontend:
         - npm ci
     build:
       commands:
-        # Anchored to the start of the line so a variable is matched by its own
-        # name and never by another variable's value. `|| true` keeps a build
+        # Anchored to the start of the line so a setting is matched by its own
+        # name and never by another setting's value. `|| true` keeps a build
         # alive when nothing matches: grep exits 1 on no match, which would
-        # otherwise fail the phase and make a missing variable look like a
+        # otherwise fail the phase and make a missing setting look like a
         # broken build.
-        - env | grep -E '^(COGNITO_CLIENT_ID|COGNITO_CLIENT_SECRET|COGNITO_ISSUER|NEXTAUTH_URL|NEXTAUTH_SECRET|DIAGNOSTICS_TOKEN|INVENTORY_DRIVER|INVENTORY_TABLE|INVENTORY_FILE|ACCOUNTS_DRIVER|ACCOUNTS_FILE)=' >> .env.production || true
+        - env | grep -E '^(AWS_APP_ID|AWS_BRANCH|NEXTAUTH_URL|INVENTORY_DRIVER|INVENTORY_TABLE|INVENTORY_FILE|ACCOUNTS_DRIVER|ACCOUNTS_FILE)=' >> .env.production || true
         - npm run build
   artifacts:
     baseDirectory: .next
