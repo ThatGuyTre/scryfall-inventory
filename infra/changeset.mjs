@@ -10,9 +10,11 @@
  * Usage:
  *   npm run infra:changeset -- --domain-prefix my-mtg-tool
  *   npm run infra:changeset -- --domain-prefix my-mtg-tool --url https://cards.example.com
+ *   npm run infra:changeset -- --domain-prefix my-mtg-tool --amplify-app-id d2gzthi8y1ves1
  *
  * Requires the AWS CLI, configured with credentials that may create DynamoDB
- * tables and Cognito user pools.
+ * tables, Cognito user pools and — when --amplify-app-id is given — an IAM
+ * role for that Amplify Hosting app.
  */
 
 import { spawnSync } from "child_process";
@@ -85,6 +87,11 @@ if (siteUrl && siteUrl !== "true") {
 	logouts.push(siteUrl);
 }
 
+// The segment after "apps/" in the Amplify Hosting App ARN. Optional: the
+// stack works without it, just without the service role that lets Secret
+// management resolve into that app's process.env.
+const amplifyAppId = flags["amplify-app-id"] ?? "";
+
 const args = [
 	"cloudformation", "deploy",
 	"--template-file", TEMPLATE,
@@ -92,12 +99,21 @@ const args = [
 	// The whole point: validate and diff, do not apply.
 	"--no-execute-changeset",
 	"--no-fail-on-empty-changeset",
+	// Required because the template can create an IAM role (for Amplify
+	// Hosting's service role) — needed even when --amplify-app-id is omitted
+	// and that role ends up skipped by its Condition.
+	"--capabilities", "CAPABILITY_IAM",
 	"--parameter-overrides",
 	`ProjectName=${project}`,
 	`CognitoDomainPrefix=${domainPrefix}`,
 	`CallbackUrls=${callbacks.join(",")}`,
 	`LogoutUrls=${logouts.join(",")}`,
+	`AmplifyAppId=${amplifyAppId}`,
 ];
+
+if (flags.profile) {
+	args.push("--profile", flags.profile);
+}
 
 if (flags.region) {
 	args.push("--region", flags.region);
@@ -106,7 +122,13 @@ if (flags.region) {
 console.log("\n  Preparing a change set. Nothing will be created.\n");
 console.log(`    stack     ${stackName}`);
 console.log(`    template  ${path.relative(process.cwd(), TEMPLATE)}`);
+if (flags.profile) {
+	console.log(`    profile   ${flags.profile}`);
+}
 console.log(`    callbacks ${callbacks.join(", ")}`);
+if (amplifyAppId) {
+	console.log(`    amplify   ${amplifyAppId}`);
+}
 console.log("");
 
 const result = spawnSync("aws", args, { stdio: "inherit", shell: process.platform === "win32" });
@@ -124,4 +146,9 @@ console.log("    2. Execute it when you are happy:");
 console.log("         aws cloudformation execute-change-set --change-set-name <arn from above>\n");
 console.log("    3. Then read the outputs for your .env.local values:");
 console.log(`         aws cloudformation describe-stacks --stack-name ${stackName} --query "Stacks[0].Outputs"\n`);
+if (amplifyAppId) {
+	console.log("    4. Run the AttachAmplifyServiceRoleCommand output once, to wire the new");
+	console.log("       role up to the Amplify app. CloudFormation cannot do this step itself,");
+	console.log("       since the app is not a resource this stack manages.\n");
+}
 console.log("  infra/AWS-SETUP.md has the rest.\n");

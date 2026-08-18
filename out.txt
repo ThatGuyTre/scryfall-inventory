@@ -1,0 +1,32 @@
+[
+    {
+        "OutputKey": "ClientSecretCommand",
+        "OutputValue": "aws cognito-idp describe-user-pool-client --user-pool-id us-east-2_b24gUjgRX --client-id 50ria53th81ln5ak8voreus9lc --query UserPoolClient.ClientSecret --output text",
+        "Description": "The client secret is deliberately not an output, since stack outputs are readable by anyone with describe-stacks. Run this to read it.\n"
+    },
+    {
+        "OutputKey": "TableName",
+        "OutputValue": "mtg-inventory-tool",
+        "Description": "Set as INVENTORY_TABLE in .env.local"
+    },
+    {
+        "OutputKey": "UserPoolId",
+        "OutputValue": "us-east-2_b24gUjgRX",
+        "Description": "Cognito user pool id"
+    },
+    {
+        "OutputKey": "CognitoClientId",
+        "OutputValue": "50ria53th81ln5ak8voreus9lc",
+        "Description": "Set as COGNITO_CLIENT_ID in .env.local"
+    },
+    {
+        "OutputKey": "CognitoIssuer",
+        "OutputValue": "https://cognito-idp.us-east-2.amazonaws.com/us-east-2_b24gUjgRX",
+        "Description": "Set as COGNITO_ISSUER in .env.local"
+    },
+    {
+        "OutputKey": "CognitoHostedUiDomain",
+        "OutputValue": "https://mtg-inventory.auth.us-east-2.amazoncognito.com",
+        "Description": "Where people are sent to sign in"
+    }
+]

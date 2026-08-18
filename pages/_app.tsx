@@ -36,7 +36,7 @@ export default function App({ Component, pageProps: { session, ...pageProps } }:
 		<>
 			<Head>
 				<title>MTG Inventory Tool</title>
-				<meta name="description" content="A simple inventory of my MTG cards" />
+				<meta name="description" content="Build decks with your collection" />
 				<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 			</Head>
 			{/*

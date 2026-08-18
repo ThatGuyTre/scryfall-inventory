@@ -2,8 +2,9 @@ AWSTemplateFormatVersion: "2010-09-09"
 
 Description: >
   MTG Inventory Tool — the AWS side of Phase 2. Creates the DynamoDB table that
-  holds collections, groups and decklists, and the Cognito user pool that signs
-  people in. Nothing else in the app needs AWS.
+  holds collections, groups and decklists, the Cognito user pool that signs
+  people in, and — when an Amplify Hosting app id is supplied — the IAM
+  service role that app needs to read its own Secret management values.
 
   Review this template before deploying it. `npm run infra:changeset` only
   prepares a change set; you execute it yourself.
@@ -51,9 +52,22 @@ Parameters:
     AllowedValues: ["true", "false"]
     Description: Refuse to delete the table, even if the stack is deleted.
 
+  AmplifyAppId:
+    Type: String
+    Default: ""
+    Description: >
+      The Amplify Hosting app id, if this app is deployed there — the segment
+      after "apps/" in its App ARN (arn:aws:amplify:<region>:<account>:apps/
+      <this value>). Amplify Hosting apps are created outside this template
+      (through the console's "host a web app" flow), so this only lets the
+      template attach a correctly scoped service role to an app that already
+      exists; it does not create the app itself. Leave blank to skip the role
+      entirely.
+
 Conditions:
   UsePointInTimeRecovery: !Equals [!Ref EnablePointInTimeRecovery, "true"]
   UseDeletionProtection: !Equals [!Ref EnableDeletionProtection, "true"]
+  HasAmplifyAppId: !Not [!Equals [!Ref AmplifyAppId, ""]]
 
 Resources:
   # ---------------------------------------------------------------------------
@@ -178,6 +192,33 @@ Resources:
       Domain: !Ref CognitoDomainPrefix
       UserPoolId: !Ref UserPool
 
+  # ---------------------------------------------------------------------------
+  # Hosting
+  # ---------------------------------------------------------------------------
+
+  AmplifyServiceRole:
+    Type: AWS::IAM::Role
+    Condition: HasAmplifyAppId
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: amplify.amazonaws.com
+            Action: sts:AssumeRole
+      # Amplify's own managed policy for a hosting/backend service role. It is
+      # scoped to Amplify's operations (not account-wide), and is what covers
+      # the ssm:GetParametersByPath + kms:Decrypt that Secret management needs
+      # to resolve COGNITO_CLIENT_ID and friends into process.env at build and
+      # SSR runtime. A hand-rolled policy risks missing a permission Amplify
+      # needs elsewhere and failing just as opaquely as having no role at all.
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AdministratorAccess-Amplify
+      Tags:
+        - Key: Project
+          Value: !Ref ProjectName
+
 Outputs:
   TableName:
     Description: Set as INVENTORY_TABLE in .env.local
@@ -206,3 +247,13 @@ Outputs:
     Value: !Sub >-
       aws cognito-idp describe-user-pool-client --user-pool-id ${UserPool}
       --client-id ${UserPoolClient} --query UserPoolClient.ClientSecret --output text
+
+  AttachAmplifyServiceRoleCommand:
+    Description: >
+      CloudFormation cannot reach into the Amplify app to attach this role
+      itself, since the app is not a resource this stack manages. Run this
+      once, after the role exists, to attach it.
+    Condition: HasAmplifyAppId
+    Value: !Sub >-
+      aws amplify update-app --app-id ${AmplifyAppId}
+      --iam-service-role-arn ${AmplifyServiceRole.Arn}

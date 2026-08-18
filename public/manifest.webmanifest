@@ -1,7 +1,7 @@
 {
 	"name": "MTG Inventory Tool",
 	"short_name": "MTG Inventory",
-	"description": "A simple inventory of my MTG cards",
+	"description": "Build decks with your collection",
 	"start_url": "/",
 	"scope": "/",
 	"display": "standalone",

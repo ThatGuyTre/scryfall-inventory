@@ -25,7 +25,13 @@ import { getAccountRepository } from "@/src/lib/accounts";
  * supplied it, so turning Cognito on is a matter of setting three variables.
  */
 
-/** True when the Cognito environment is complete. */
+/**
+ * True when the Cognito environment is complete.
+ *
+ * Amplify Hosting injects Console-configured environment variables — including
+ * ones marked secret — as plain `process.env` at build and runtime, so no
+ * special SDK call is needed to read them.
+ */
 export function isCognitoConfigured(): boolean {
 	return Boolean(
 		process.env.COGNITO_CLIENT_ID &&
