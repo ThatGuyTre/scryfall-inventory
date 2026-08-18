@@ -47,12 +47,6 @@ export default function SignInPage({ providers, hasLocal }: SignInPageProps) {
 
 	const hosted = providers.filter((provider) => provider.id !== "local");
 
-	console.log(providers);
-
-	console.log("COGNITO_CLIENT_ID", process.env.COGNITO_CLIENT_ID?.toString().length);
-	console.log("COGNITO_CLIENT_SECRET", process.env.COGNITO_CLIENT_SECRET?.toString().length);
-	console.log("COGNITO_ISSUER", process.env.COGNITO_ISSUER?.toString().length);
-
 	/**
 	 * Signs in with the local provider.
 	 */

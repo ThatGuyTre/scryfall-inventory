@@ -93,7 +93,7 @@ export default function Header() {
 						color="whiteAlpha.800"
 						letterSpacing="normal"
 					>
-						v{version}
+						v{version} ({process.env.NODE_ENV.toUpperCase()})
 					</Text>
 				) : null}
 			</Heading>

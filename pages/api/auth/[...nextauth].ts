@@ -3,6 +3,7 @@ import NextAuth, { type AuthOptions } from "next-auth";
 import CognitoProvider from "next-auth/providers/cognito";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { getAccountRepository } from "@/src/lib/accounts";
+import { secret } from "@aws-amplify/backend";
 
 /**
  * Sign-in.
@@ -27,11 +28,19 @@ import { getAccountRepository } from "@/src/lib/accounts";
 
 /** True when the Cognito environment is complete. */
 export function isCognitoConfigured(): boolean {
-	return Boolean(
-		process.env.COGNITO_CLIENT_ID &&
-		process.env.COGNITO_CLIENT_SECRET &&
-		process.env.COGNITO_ISSUER,
-	);
+	if(process.env.NODE_ENV !== "production") {
+		return Boolean(
+			secret("COGNITO_CLIENT_ID") &&
+			secret("COGNITO_CLIENT_SECRET") &&
+			secret("COGNITO_ISSUER")
+		);
+	} else {
+		return Boolean(
+			process.env.COGNITO_CLIENT_ID &&
+			process.env.COGNITO_CLIENT_SECRET &&
+			process.env.COGNITO_ISSUER,
+		);
+	}
 }
 
 /** True when signing in by typing an email address is permitted. */
@@ -70,11 +79,19 @@ export function localUserId(email: string): string {
 const providers: AuthOptions["providers"] = [];
 
 if (isCognitoConfigured()) {
-	providers.push(CognitoProvider({
-		clientId: process.env.COGNITO_CLIENT_ID as string,
-		clientSecret: process.env.COGNITO_CLIENT_SECRET as string,
-		issuer: process.env.COGNITO_ISSUER as string,
-	}));
+	if(process.env.NODE_ENV !== "production") {
+		providers.push(CognitoProvider({
+			clientId: process.env.COGNITO_CLIENT_ID as string,
+			clientSecret: process.env.COGNITO_CLIENT_SECRET as string,
+			issuer: process.env.COGNITO_ISSUER as string,
+		}));
+	} else {
+		providers.push(CognitoProvider({
+			clientId: secret("COGNITO_CLIENT_ID") as string,
+			clientSecret: secret("COGNITO_CLIENT_SECRET") as string,
+			issuer: secret("COGNITO_ISSUER") as string,
+		}));
+	}
 }
 
 if (isLocalSignInAllowed()) {
