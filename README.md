@@ -163,11 +163,38 @@ No caller changes.
 
 ### Environment variables
 
-| Variable            | Default                    | Purpose                                    |
-| ------------------- | -------------------------- | ------------------------------------------ |
-| `INVENTORY_DRIVER`  | `json`                     | `json` or `dynamodb`                       |
-| `INVENTORY_FILE`    | `src/data/inventory.json`  | JSON driver only: where the document lives |
-| `INVENTORY_TABLE`   | —                          | DynamoDB driver only: the table name       |
+| Variable                | Default                    | Purpose                                    |
+| ----------------------- | -------------------------- | ------------------------------------------ |
+| `INVENTORY_DRIVER`      | `json`                     | `json` or `dynamodb`                       |
+| `INVENTORY_FILE`        | `src/data/inventory.json`  | JSON driver only: where the document lives |
+| `INVENTORY_TABLE`       | —                          | DynamoDB driver only: the table name       |
+| `NEXTAUTH_URL`          | `http://localhost:3000`    | **Required in any deployment.** The site's own origin. |
+| `NEXTAUTH_SECRET`       | a value in this repository | **Required in any deployment.** Signs session tokens. |
+| `COGNITO_CLIENT_ID`     | —                          | Enables Cognito sign-in; all three or none |
+| `COGNITO_CLIENT_SECRET` | —                          | Read it with the `ClientSecretCommand` stack output |
+| `COGNITO_ISSUER`        | —                          | `https://cognito-idp.<region>.amazonaws.com/<pool id>` |
+| `ALLOW_LOCAL_SIGNIN`    | unset                      | `true` permits password-free sign-in, including in production |
+| `DIAGNOSTICS_TOKEN`     | unset                      | Enables `/api/diagnostics/config`; unset means that route 404s |
+
+`NEXTAUTH_URL` is the one most easily missed. next-auth falls back to
+`http://localhost:3000`, which is correct locally and wrong everywhere else: OAuth
+callback URLs are built from it, so sign-in redirects back to a host that does not
+exist.
+
+### Checking what a deployment can actually see
+
+When a hosting console insists a variable is set and the app insists it is not,
+`/api/diagnostics/config` reports what the running process holds. It never returns
+a value — only whether each variable is present, its length, whether it carries
+stray whitespace, and the conclusions the app draws from it.
+
+It is off unless `DIAGNOSTICS_TOKEN` is set, and answers 404 without a matching
+`x-diagnostics-token` header, so there is nothing to find on a deployment that
+never enabled it.
+
+```bash
+curl -H "x-diagnostics-token: $DIAGNOSTICS_TOKEN" https://your-host/api/diagnostics/config
+```
 
 ### API
 

@@ -3,6 +3,7 @@ import NextAuth, { type AuthOptions } from "next-auth";
 import CognitoProvider from "next-auth/providers/cognito";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { getAccountRepository } from "@/src/lib/accounts";
+import { isCognitoConfigured, isLocalSignInAllowed, readEnv } from "@/src/lib/accounts/authConfig";
 
 /**
  * Sign-in.
@@ -24,30 +25,6 @@ import { getAccountRepository } from "@/src/lib/accounts";
  * Everything downstream reads `session.user.id` and does not care which provider
  * supplied it, so turning Cognito on is a matter of setting three variables.
  */
-
-/**
- * True when the Cognito environment is complete.
- *
- * Amplify Hosting injects Console-configured environment variables — including
- * ones marked secret — as plain `process.env` at build and runtime, so no
- * special SDK call is needed to read them.
- */
-export function isCognitoConfigured(): boolean {
-	return Boolean(
-		process.env.COGNITO_CLIENT_ID &&
-		process.env.COGNITO_CLIENT_SECRET &&
-		process.env.COGNITO_ISSUER,
-	);
-}
-
-/** True when signing in by typing an email address is permitted. */
-export function isLocalSignInAllowed(): boolean {
-	if (process.env.ALLOW_LOCAL_SIGNIN === "true") {
-		return true;
-	}
-
-	return process.env.NODE_ENV !== "production" && !isCognitoConfigured();
-}
 
 /**
  * Derives a stable id from an email address.
@@ -77,9 +54,9 @@ const providers: AuthOptions["providers"] = [];
 
 if (isCognitoConfigured()) {
 	providers.push(CognitoProvider({
-		clientId: process.env.COGNITO_CLIENT_ID as string,
-		clientSecret: process.env.COGNITO_CLIENT_SECRET as string,
-		issuer: process.env.COGNITO_ISSUER as string,
+		clientId: readEnv("COGNITO_CLIENT_ID"),
+		clientSecret: readEnv("COGNITO_CLIENT_SECRET"),
+		issuer: readEnv("COGNITO_ISSUER"),
 	}));
 }
 

@@ -16,11 +16,12 @@ import {
 	Stack,
 	Text,
 } from "@chakra-ui/react";
-import { getProviders, signIn } from "next-auth/react";
+import { signIn } from "next-auth/react";
 import type { GetServerSideProps } from "next";
 import { useRouter } from "next/router";
 import { useState } from "react";
 import Webpage from "@/components/Webpage";
+import { describeProviders } from "@/src/lib/accounts/authConfig";
 
 /**
  * Sign-in.
@@ -195,13 +196,22 @@ export default function SignInPage({ providers, hasLocal }: SignInPageProps) {
 }
 
 export const getServerSideProps: GetServerSideProps<SignInPageProps> = async () => {
-	const providers = await getProviders();
-	const list = Object.values(providers ?? {}).map((provider) => ({ id: provider.id, name: provider.name }));
+	/*
+		Read the providers straight from the environment rather than through
+		getProviders(). That helper is a client function: server-side it fetches
+		`${NEXTAUTH_URL}/api/auth/providers`, and when NEXTAUTH_URL is unset
+		next-auth defaults that to http://localhost:3000 — so on any real host the
+		request went nowhere, the helper swallowed the error and returned null, and
+		this page announced that nothing was configured no matter what the
+		environment held. Reading the environment needs no request and cannot
+		disagree with what the auth route builds from the same module.
+	*/
+	const providers = describeProviders();
 
 	return {
 		props: {
-			providers: list,
-			hasLocal: list.some((provider) => provider.id === "local"),
+			providers,
+			hasLocal: providers.some((provider) => provider.id === "local"),
 		},
 	};
 };
