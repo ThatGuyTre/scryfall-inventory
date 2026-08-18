@@ -218,6 +218,46 @@ Inventory requests are never cached, so an import always reflects what is
 actually stored. Bump `CACHE_NAME` in `public/sw.js` to invalidate everything a
 previous version cached.
 
+## Deploying to AWS Amplify
+
+Amplify needs two things that are easy to get wrong, and both fail the same way:
+the sign-in page reports that no sign-in method is configured, while the console
+shows every value present.
+
+**Console secrets are not environment variables.** Amplify's *Secret management*
+stores SSM Parameter Store entries. They never appear in `process.env` under
+their own names, so a value kept there is invisible to this app no matter how it
+is spelled. Everything in the table above has to be an *Environment variable*.
+
+**Environment variables do not reach the server runtime on their own.** A
+Next.js server has no access to the build environment by default — AWS does this
+deliberately, so that build-time secrets are not handed to the SSR function.
+`amplify.yml` bridges the gap by writing the named variables into
+`.env.production` before `next build`, which Next.js then loads. A variable
+added in the console but not named in `amplify.yml` still will not arrive.
+
+That bridge has a cost: `.env.production` is part of the deployment artifact, so
+anyone who can read the deployment can read the values written into it. An
+issuer URL and a client id do not matter. `COGNITO_CLIENT_SECRET` and
+`NEXTAUTH_SECRET` do, and the alternative is reading them from SSM at runtime
+under the app's service role.
+
+`NEXTAUTH_URL` must be the origin the browser actually uses. A branch-level
+value overrides the all-branches one, so a branch served on a custom domain
+needs that domain, not its `amplifyapp.com` address. A trailing slash is fine —
+next-auth normalizes it.
+
+### The filesystem is read only
+
+Sign-in creates a profile row on every sign-in, and the JSON driver writes to
+`src/data/accounts.json`. Amplify's SSR compute is a Lambda, whose filesystem is
+read only outside `/tmp`, so that write throws and sign-in fails *after* Cognito
+has authenticated successfully — which looks like a Cognito problem and is not.
+
+Pointing `ACCOUNTS_FILE` and `INVENTORY_FILE` at `/tmp` gets sign-in working,
+but the files are per-container and vanish on a cold start. Finishing the
+DynamoDB driver is the actual fix.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
