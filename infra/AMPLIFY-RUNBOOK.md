@@ -72,8 +72,13 @@ both. Attaching only the first leaves a fully configured app insisting Cognito i
 absent.
 
 The compute role is scoped to reading and decrypting exactly this app's shared
-secret path. That narrowness matters: its credentials are live inside the SSR
+secret path, plus the three DynamoDB calls the inventory driver makes against
+this one table. That narrowness matters: its credentials are live inside the SSR
 runtime, so any code-execution bug in the app inherits whatever the role can do.
+
+Running the inventory on DynamoDB needs `INVENTORY_DRIVER=dynamodb` and
+`INVENTORY_TABLE` as well. Without the compute role attached, the driver has no
+credentials and every read fails.
 
 ## Deploying
 
@@ -148,7 +153,8 @@ Sign-in creates a profile row every time, and the JSON driver writes to
 read only outside `/tmp`, so that write throws and sign-in fails *after* Cognito
 has authenticated — which looks like a Cognito problem and is not.
 
-Pointing `ACCOUNTS_FILE` and `INVENTORY_FILE` at `/tmp` proves the flow end to
-end, but those files are per-container and vanish on a cold start. The inventory
-side of this is solved by setting `INVENTORY_DRIVER=dynamodb`; accounts still
-need the same treatment.
+The inventory side is solved: set `INVENTORY_DRIVER=dynamodb` and
+`INVENTORY_TABLE` and nothing touches the filesystem. Accounts still do. Until
+the account store gets the same treatment, point `ACCOUNTS_FILE` at `/tmp` to
+prove sign-in end to end, knowing that file is per-container and vanishes on a
+cold start.
