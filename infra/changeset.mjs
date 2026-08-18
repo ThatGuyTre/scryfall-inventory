@@ -11,6 +11,9 @@
  *   npm run infra:changeset -- --domain-prefix my-mtg-tool
  *   npm run infra:changeset -- --domain-prefix my-mtg-tool --url https://cards.example.com
  *   npm run infra:changeset -- --domain-prefix my-mtg-tool --amplify-app-id d2gzthi8y1ves1
+ *   npm run infra:changeset -- --domain-prefix my-mtg-tool --profile work
+ *
+ * The AWS CLI profile defaults to "personal". Pass --profile to use another.
  *
  * Requires the AWS CLI, configured with credentials that may create DynamoDB
  * tables, Cognito user pools and — when --amplify-app-id is given — an IAM
@@ -76,6 +79,13 @@ if (!domainPrefix) {
 const project = flags.project ?? "mtg-inventory-tool";
 const stackName = flags.stack ?? project;
 
+// Which configured AWS CLI profile to use. Defaults to "personal" rather than
+// leaving it unset, so that a machine holding credentials for more than one
+// account cannot quietly build a change set against the wrong one. A bare
+// --profile with no value parses as "true", which means "use the default"
+// rather than a profile literally named true.
+const profile = flags.profile && flags.profile !== "true" ? flags.profile : "personal";
+
 // The deployed site's origin, if there is one yet. Localhost is always allowed
 // so that a freshly created pool works for development straight away.
 const siteUrl = flags.url?.replace(/\/$/, "");
@@ -111,11 +121,10 @@ const args = [
 	`CallbackUrls=${callbacks.join(",")}`,
 	`LogoutUrls=${logouts.join(",")}`,
 	`AmplifyAppId=${amplifyAppId}`,
+	`AwsProfile=${profile}`,
 ];
 
-if (flags.profile) {
-	args.push("--profile", flags.profile);
-}
+args.push("--profile", profile);
 
 if (flags.region) {
 	args.push("--region", flags.region);
@@ -124,9 +133,7 @@ if (flags.region) {
 console.log("\n  Preparing a change set. Nothing will be created.\n");
 console.log(`    stack     ${stackName}`);
 console.log(`    template  ${path.relative(process.cwd(), TEMPLATE)}`);
-if (flags.profile) {
-	console.log(`    profile   ${flags.profile}`);
-}
+console.log(`    profile   ${profile}`);
 console.log(`    callbacks ${callbacks.join(", ")}`);
 if (amplifyAppId) {
 	console.log(`    amplify   ${amplifyAppId}`);
@@ -143,11 +150,11 @@ if (result.error?.code === "ENOENT") {
 // is ready, printing the command to execute it. That is success, not failure.
 console.log("\n  Read the change set above, then:\n");
 console.log("    1. Review it in the console, or with:");
-console.log("         aws cloudformation describe-change-set --change-set-name <arn from above>\n");
+console.log(`         aws cloudformation describe-change-set --profile ${profile} --change-set-name <arn from above>\n`);
 console.log("    2. Execute it when you are happy:");
-console.log("         aws cloudformation execute-change-set --change-set-name <arn from above>\n");
+console.log(`         aws cloudformation execute-change-set --profile ${profile} --change-set-name <arn from above>\n`);
 console.log("    3. Then read the outputs for your .env.local values:");
-console.log(`         aws cloudformation describe-stacks --stack-name ${stackName} --query "Stacks[0].Outputs"\n`);
+console.log(`         aws cloudformation describe-stacks --profile ${profile} --stack-name ${stackName} --query "Stacks[0].Outputs"\n`);
 if (amplifyAppId) {
 	console.log("    4. Run the AttachAmplifyRolesCommand output once, to wire the new roles");
 	console.log("       up to the Amplify app. CloudFormation cannot do this step itself, since");

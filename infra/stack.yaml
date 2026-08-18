@@ -52,6 +52,15 @@ Parameters:
     AllowedValues: ["true", "false"]
     Description: Refuse to delete the table, even if the stack is deleted.
 
+  AwsProfile:
+    Type: String
+    Default: personal
+    Description: >
+      The AWS CLI profile named in the command outputs below. It affects nothing
+      this stack creates -- it exists so that a command copied out of the outputs
+      runs against the same account the stack was deployed to, on a machine
+      configured for more than one.
+
   AmplifyAppId:
     Type: String
     Default: ""
@@ -316,8 +325,9 @@ Outputs:
       The client secret is deliberately not an output, since stack outputs are
       readable by anyone with describe-stacks. Run this to read it.
     Value: !Sub >-
-      aws cognito-idp describe-user-pool-client --user-pool-id ${UserPool}
-      --client-id ${UserPoolClient} --query UserPoolClient.ClientSecret --output text
+      aws cognito-idp describe-user-pool-client --profile ${AwsProfile}
+      --user-pool-id ${UserPool} --client-id ${UserPoolClient}
+      --query UserPoolClient.ClientSecret --output text
 
   AttachAmplifyRolesCommand:
     Description: >
@@ -330,7 +340,7 @@ Outputs:
       that Cognito is not set up.
     Condition: HasAmplifyAppId
     Value: !Sub >-
-      aws amplify update-app --app-id ${AmplifyAppId}
+      aws amplify update-app --profile ${AwsProfile} --app-id ${AmplifyAppId}
       --iam-service-role-arn ${AmplifyServiceRole.Arn}
       --compute-role-arn ${AmplifyComputeRole.Arn}
 

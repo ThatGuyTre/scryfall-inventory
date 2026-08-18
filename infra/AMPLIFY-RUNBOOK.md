@@ -88,16 +88,20 @@ Run from the repository root, on the branch carrying the change.
 npm run infra:changeset -- --domain-prefix mtg-inventory --amplify-app-id <app id> --url https://<your domain> --region <region>
 ```
 
+The AWS CLI profile defaults to `personal`; pass `--profile` to use another. The
+script forwards it to the stack, so the commands the outputs print name the same
+profile and can be copied without editing.
+
 That builds a change set and applies nothing. Read it, then:
 
 ```bash
-aws cloudformation execute-change-set --change-set-name <arn printed above>
+aws cloudformation execute-change-set --profile personal --change-set-name <arn printed above>
 ```
 
 Then read the outputs and run `AttachAmplifyRolesCommand`:
 
 ```bash
-aws cloudformation describe-stacks --stack-name mtg-inventory-tool --query "Stacks[0].Outputs"
+aws cloudformation describe-stacks --profile personal --stack-name mtg-inventory-tool --query "Stacks[0].Outputs"
 ```
 
 Finally check the Cognito app client actually allows the deployed origin. If the
@@ -105,7 +109,7 @@ stack was first created without `--url`, only localhost is registered and Cognit
 will refuse the redirect:
 
 ```bash
-aws cognito-idp describe-user-pool-client --user-pool-id <pool id> --client-id <client id> --query "UserPoolClient.{Callbacks:CallbackURLs,Logouts:LogoutURLs}"
+aws cognito-idp describe-user-pool-client --profile personal --user-pool-id <pool id> --client-id <client id> --query "UserPoolClient.{Callbacks:CallbackURLs,Logouts:LogoutURLs}"
 ```
 
 You need `https://<your domain>/api/auth/callback/cognito`. `--url` takes one
